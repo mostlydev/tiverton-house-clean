@@ -1,0 +1,142 @@
+<% content_for :title, "Trade ##{@trade.id}" %>
+
+<div class="admin-header">
+  <div class="breadcrumb">
+    <%= link_to "ADMIN", admin_root_path %>
+    <span class="breadcrumb-separator">/</span>
+    <%= link_to "TRADES", admin_trades_path %>
+    <span class="breadcrumb-separator">/</span>
+    <span><%= @trade.id %></span>
+  </div>
+  <h1>Trade #<%= @trade.id %></h1>
+</div>
+
+<div class="detail-grid">
+  <div class="detail-section">
+    <h3>Trade Details</h3>
+    <div class="detail-row">
+      <span class="detail-label">ID</span>
+      <span class="detail-value"><%= @trade.id %></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Agent</span>
+      <span class="detail-value">
+        <%= link_to @trade.agent&.name || @trade.agent_id, admin_agent_path(@trade.agent) if @trade.agent %>
+      </span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Ticker</span>
+      <span class="detail-value"><%= @trade.ticker %></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Side</span>
+      <span class="detail-value">
+        <span class="badge <%= @trade.side == 'BUY' ? 'badge-success' : 'badge-danger' %>">
+          <%= @trade.side %>
+        </span>
+      </span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Qty Requested</span>
+      <span class="detail-value"><%= @trade.qty_requested ? number_with_delimiter(@trade.qty_requested) : '-' %></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Amount Requested</span>
+      <span class="detail-value"><%= @trade.amount_requested ? "$#{number_with_delimiter(@trade.amount_requested.round(2))}" : '-' %></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Order Type</span>
+      <span class="detail-value"><%= @trade.order_type %></span>
+    </div>
+    <% if @trade.limit_price %>
+      <div class="detail-row">
+        <span class="detail-label">Limit Price</span>
+        <span class="detail-value">$<%= number_with_precision(@trade.limit_price, precision: 2) %></span>
+      </div>
+    <% end %>
+    <% if @trade.qty_filled %>
+      <div class="detail-row">
+        <span class="detail-label">Qty Filled</span>
+        <span class="detail-value"><%= number_with_delimiter(@trade.qty_filled) %></span>
+      </div>
+    <% end %>
+    <% if @trade.avg_fill_price %>
+      <div class="detail-row">
+        <span class="detail-label">Avg Fill Price</span>
+        <span class="detail-value">$<%= number_with_precision(@trade.avg_fill_price, precision: 2) %></span>
+      </div>
+    <% end %>
+    <% if @trade.filled_value %>
+      <div class="detail-row">
+        <span class="detail-label">Filled Value</span>
+        <span class="detail-value">$<%= number_with_delimiter(@trade.filled_value.round(2)) %></span>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="detail-section">
+    <h3>Status & Metadata</h3>
+    <div class="detail-row">
+      <span class="detail-label">Status</span>
+      <span class="detail-value">
+        <span class="badge <%= status_badge_class(@trade.status) %>">
+          <%= @trade.status %>
+        </span>
+      </span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Created At</span>
+      <span class="detail-value"><%= @trade.created_at.strftime("%Y-%m-%d %H:%M:%S %Z") %></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Updated At</span>
+      <span class="detail-value"><%= @trade.updated_at.strftime("%Y-%m-%d %H:%M:%S %Z") %></span>
+    </div>
+    <% if @trade.approved_at %>
+      <div class="detail-row">
+        <span class="detail-label">Approved At</span>
+        <span class="detail-value"><%= @trade.approved_at.strftime("%Y-%m-%d %H:%M:%S %Z") %></span>
+      </div>
+    <% end %>
+    <% if @trade.executed_at %>
+      <div class="detail-row">
+        <span class="detail-label">Executed At</span>
+        <span class="detail-value"><%= @trade.executed_at.strftime("%Y-%m-%d %H:%M:%S %Z") %></span>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<% if @trade.thesis.present? %>
+  <div class="detail-section" style="margin-bottom: 2rem;">
+    <h3>Thesis</h3>
+    <div style="padding: 1rem; background: var(--bg-tertiary); border: 1px solid var(--border); font-family: 'Courier New', monospace; font-size: 0.875rem; line-height: 1.6; white-space: pre-wrap;"><%= @trade.thesis %></div>
+  </div>
+<% end %>
+
+<% if @trade.trade_events.any? %>
+  <h2>Trade Events</h2>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Event Type</th>
+          <th>Details</th>
+          <th>Timestamp</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @trade.trade_events.order(:created_at).each do |event| %>
+          <tr>
+            <td>
+              <span class="badge badge-info"><%= event.event_type %></span>
+            </td>
+            <td class="mono text-secondary"><%= event.details.to_json %></td>
+            <td class="mono"><%= event.created_at.strftime("%Y-%m-%d %H:%M:%S") %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>
+

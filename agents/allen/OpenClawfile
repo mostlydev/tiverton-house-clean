@@ -1,0 +1,18 @@
+FROM ghcr.io/openclaw/openclaw:latest
+
+CLAW_TYPE openclaw
+AGENT AGENTS.md
+
+MODEL primary openrouter/google/gemini-3-flash-preview
+
+HANDLE discord
+
+CONFIGURE openclaw config set agents.defaults.heartbeat.every 15m
+CONFIGURE openclaw config set agents.defaults.heartbeat.target none
+CONFIGURE openclaw config set channels.discord.status online
+CONFIGURE openclaw config set tools.web.search.provider perplexity
+CONFIGURE openclaw config set tools.web.search.perplexity.model sonar-pro
+
+TRACK apt npm
+PRIVILEGE worker root
+PRIVILEGE runtime claw-user

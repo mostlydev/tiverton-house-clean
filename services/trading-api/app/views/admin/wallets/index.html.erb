@@ -1,0 +1,43 @@
+<% content_for :title, "Wallets" %>
+
+<div class="admin-header">
+  <div class="breadcrumb">
+    <%= link_to "ADMIN", admin_root_path %>
+    <span class="breadcrumb-separator">/</span>
+    <span>WALLETS</span>
+  </div>
+  <h1>All Wallets</h1>
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Agent</th>
+        <th>Cash</th>
+        <th>Wallet Size</th>
+        <th>Invested</th>
+        <th>Updated</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @wallets.each do |wallet| %>
+        <tr>
+          <td class="mono"><%= wallet.id %></td>
+          <td>
+            <%= link_to wallet.agent&.name || wallet.agent_id, admin_agent_path(wallet.agent) if wallet.agent %>
+          </td>
+          <td class="mono">$<%= number_with_delimiter(wallet.cash.round(2)) %></td>
+          <td class="mono">$<%= number_with_delimiter(wallet.wallet_size.round(2)) %></td>
+          <td class="mono">$<%= number_with_delimiter(wallet.invested.round(2)) %></td>
+          <td class="mono text-secondary"><%= wallet.updated_at.strftime("%Y-%m-%d %H:%M") %></td>
+          <td>
+            <%= link_to "View →", admin_wallet_path(wallet) %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

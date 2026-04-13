@@ -1,0 +1,43 @@
+<% content_for :title, "Broker Events" %>
+
+<div class="admin-header">
+  <div class="breadcrumb">
+    <%= link_to "ADMIN", admin_root_path %>
+    <span class="breadcrumb-separator">/</span>
+    <span>BROKER</span>
+    <span class="breadcrumb-separator">/</span>
+    <span>EVENTS</span>
+  </div>
+  <h1>Broker Order Events</h1>
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Order ID</th>
+        <th>Event Type</th>
+        <th>Payload</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @events.each do |event| %>
+        <tr>
+          <td class="mono"><%= event.id %></td>
+          <td class="mono text-secondary"><%= event.broker_order_id %></td>
+          <td>
+            <span class="badge badge-purple"><%= event.event_type %></span>
+          </td>
+          <td class="mono text-muted" style="max-width: 400px; overflow: hidden; text-overflow: ellipsis;">
+            <%= event.payload.to_json if event.payload.present? %>
+          </td>
+          <td class="mono text-secondary"><%= event.created_at.strftime("%Y-%m-%d %H:%M:%S") %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<%= paginate @events if defined?(paginate) %>

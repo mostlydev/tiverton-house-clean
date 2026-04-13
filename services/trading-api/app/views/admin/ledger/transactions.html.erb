@@ -1,0 +1,43 @@
+<% content_for :title, "Transactions" %>
+
+<div class="admin-header">
+  <div class="breadcrumb">
+    <%= link_to "ADMIN", admin_root_path %>
+    <span class="breadcrumb-separator">/</span>
+    <%= link_to "LEDGER", admin_ledger_path %>
+    <span class="breadcrumb-separator">/</span>
+    <span>TRANSACTIONS</span>
+  </div>
+  <h1>Ledger Transactions</h1>
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Source ID</th>
+        <th>Agent ID</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @transactions.each do |txn| %>
+        <tr>
+          <td class="mono"><%= txn.id %></td>
+          <td>
+            <span class="badge badge-purple"><%= txn.source_type %></span>
+          </td>
+          <td class="text-secondary"><%= txn.description %></td>
+          <td class="mono"><%= txn.source_id || '-' %></td>
+          <td class="mono text-muted"><%= txn.agent_id || '-' %></td>
+          <td class="mono text-secondary"><%= txn.created_at.strftime("%Y-%m-%d %H:%M:%S") %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<%= paginate @transactions if defined?(paginate) %>

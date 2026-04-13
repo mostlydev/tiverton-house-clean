@@ -1,0 +1,121 @@
+admin:
+  username: <%= ENV["ADMIN_USERNAME"] %>
+  password: <%= ENV["ADMIN_PASSWORD"] %>
+openrouter:
+  api_key: <%= ENV["OPENROUTER_API_KEY"] %>
+news_ai:
+  enabled: <%= ENV.fetch("NEWS_AI_ANALYSIS", "false") %>
+  model: <%= ENV.fetch("NEWS_AI_MODEL", "google/gemini-3.1-flash-lite-preview") %>
+  max_retries: <%= ENV.fetch("NEWS_AI_MAX_RETRIES", 3) %>
+  retry_delay_seconds: <%= ENV.fetch("NEWS_AI_RETRY_DELAY", 2) %>
+  timeout_seconds: <%= ENV.fetch("NEWS_AI_TIMEOUT", 15) %>
+  open_timeout_seconds: <%= ENV.fetch("NEWS_AI_OPEN_TIMEOUT", 5) %>
+  temperature: <%= ENV.fetch("NEWS_AI_TEMPERATURE", "0.3") %>
+  content_max_length: <%= ENV.fetch("NEWS_AI_CONTENT_MAX_LENGTH", 2000) %>
+  prompt_template: |
+    You are a trading desk news filter. BLOCK 95% of news. Only concrete events and early warnings pass.
+
+    ARTICLE:
+    Headline: {{headline}}
+    Symbols: {{symbols}}
+    Content: {{content}}
+
+    CURRENT PORTFOLIO:
+    {{positions}}
+
+    WATCHLISTS:
+    {{watchlists}}
+
+    AGENT STRATEGIES:
+    {{agents}}
+
+    WHITELIST - Only these qualify as HIGH impact:
+
+    1. EARNINGS: Quarterly/annual results with actual numbers reported
+    2. M&A: Signed, definitive agreements (not exploring, not rumored)
+    3. FDA: Official approval/rejection decisions with press releases
+    4. SEC: Material 8-K filings (actual events, not routine)
+    5. BANKRUPTCY - ALL STAGES:
+       * Chapter 7/11 actually filed
+       * "Considering bankruptcy", "hires bankruptcy advisors" (early warning)
+       * Restructuring talks, forbearance agreements, going concern warnings
+    6. HALTS: Exchange-issued trading halts/resumes
+    7. MACRO DATA: CPI, PPI, NFP, Fed rate decisions (published numbers)
+    8. GEOPOLITICAL: War, sanctions implemented, ceasefires signed
+    9. PROVISIONAL FILINGS: SEC notices of proposed rule changes, preliminary proxy filings with material changes
+
+    AUTO-REJECT as LOW:
+    - Any person's opinion (Cramer, analysts, traders, "X says Y")
+    - Price targets, upgrades, downgrades
+    - "Could", "might", "may" (EXCEPT bankruptcy warnings)
+    - Market summaries, "what to watch", "stocks to watch"
+    - Crypto price predictions, trader commentary
+    - Political speeches without concrete policy
+
+    BANKRUPTCY SPECIAL RULE:
+    - If headline contains "bankruptcy", "restructuring", "going concern", "forbearance", "advisor" + financial distress → HIGH (early warning)
+
+    Respond with JSON only (no markdown):
+    {
+      "impact": "HIGH|MEDIUM|LOW",
+      "route_to": ["agent1", "agent2"],
+      "auto_post": true/false,
+      "reasoning": "What event or warning was announced"
+    }
+
+    DEFAULT TO LOW. Be cruel. Most news is useless.
+news_poll:
+  minutes: <%= ENV.fetch("NEWS_POLL_MINUTES", 5) %>
+  overlap_minutes: <%= ENV.fetch("NEWS_POLL_OVERLAP_MINUTES", 5) %>
+  fetch_limit: <%= ENV.fetch("NEWS_FETCH_LIMIT", 50) %>
+news_summary:
+  window_minutes: <%= ENV.fetch("NEWS_SUMMARY_WINDOW_MINUTES", 60) %>
+discord:
+  bot_token: <%= ENV["DISCORD_BOT_TOKEN"] %>
+  trading_floor_webhook: <%= ENV["DISCORD_TRADING_FLOOR_WEBHOOK"] %>
+  infra_webhook: <%= ENV["DISCORD_INFRA_WEBHOOK"] %>
+  trading_floor_channel_id: <%= ENV["DISCORD_TRADING_FLOOR_CHANNEL_ID"] %>
+  infra_channel_id: <%= ENV["DISCORD_INFRA_CHANNEL_ID"] %>
+  notification_dedupe_seconds: <%= ENV.fetch("DISCORD_NOTIFICATION_DEDUPE_SECONDS", "300") %>
+api_auth:
+  internal_token: <%= ENV["TRADING_API_INTERNAL_TOKEN"] %>
+  agents:
+    tiverton: <%= ENV["TIVERTON_TRADING_API_TOKEN"] %>
+    weston: <%= ENV["WESTON_TRADING_API_TOKEN"] %>
+    logan: <%= ENV["LOGAN_TRADING_API_TOKEN"] %>
+    dundas: <%= ENV["DUNDAS_TRADING_API_TOKEN"] %>
+    gerrard: <%= ENV["GERRARD_TRADING_API_TOKEN"] %>
+    allen: <%= ENV["ALLEN_TRADING_API_TOKEN"] %>
+remediation:
+  enabled: <%= ENV.fetch("SUBMISSION_REMEDIATION_ENABLED", "true") %>
+  agent: <%= ENV.fetch("SUBMISSION_REMEDIATION_AGENT", "tiverton") %>
+  channel_id: <%= ENV["SUBMISSION_REMEDIATION_DISCORD_CHANNEL_ID"] || ENV["DISCORD_INFRA_CHANNEL_ID"] || "1464796137893662843" %>
+  timeout_seconds: <%= ENV.fetch("SUBMISSION_REMEDIATION_TIMEOUT_SECONDS", 20) %>
+  throttle_seconds: <%= ENV.fetch("SUBMISSION_REMEDIATION_THROTTLE_SECONDS", 120) %>
+trades:
+  duplicate_window_seconds: <%= ENV.fetch("TRADE_DUPLICATE_WINDOW_SECONDS", "300") %>
+  proposal_failure_cooldown_seconds: <%= ENV.fetch("TRADE_PROPOSAL_FAILURE_COOLDOWN_SECONDS", "30") %>
+  stop_loss_fallback_percent: <%= ENV.fetch("STOP_LOSS_FALLBACK_PERCENT", "0.10") %>
+  stop_loss_alert_interval_minutes: <%= ENV.fetch("STOP_LOSS_ALERT_INTERVAL_MINUTES", "15") %>
+  stale:
+    execution_timeout_minutes: <%= ENV.fetch("TRADES_STALE_EXECUTION_MINUTES", 5) %>
+    approval_timeout_minutes: <%= ENV.fetch("TRADES_STALE_APPROVAL_MINUTES", 5) %>
+    proposal_timeout_minutes: <%= ENV.fetch("TRADES_STALE_PROPOSAL_MINUTES", 15) %>
+outbox:
+  max_attempts: <%= ENV.fetch("OUTBOX_MAX_ATTEMPTS", 5) %>
+  lock_timeout_minutes: <%= ENV.fetch("OUTBOX_LOCK_TIMEOUT_MINUTES", 5) %>
+market_hours:
+  pre_market_start_minutes: <%= ENV.fetch("MARKET_PRE_OPEN_MINUTES", 240) %>
+  market_open_minutes: <%= ENV.fetch("MARKET_OPEN_MINUTES", 570) %>
+  market_close_minutes: <%= ENV.fetch("MARKET_CLOSE_MINUTES", 960) %>
+  after_hours_end_minutes: <%= ENV.fetch("MARKET_AFTER_HOURS_END_MINUTES", 1200) %>
+alpaca:
+  env: <%= ENV.fetch("ALPACA_ENV", "paper") %>
+  data_endpoint: <%= ENV.fetch("ALPACA_DATA_ENDPOINT", "https://data.alpaca.markets") %>
+  data_url: <%= ENV["ALPACA_DATA_URL"] %>
+  data_feed: <%= ENV.fetch("ALPACA_DATA_FEED", "iex") %>
+  options_data_feed: <%= ENV.fetch("ALPACA_OPTIONS_DATA_FEED", "indicative") %>
+  time_in_force: <%= ENV.fetch("ALPACA_TIME_IN_FORCE", "gtc") %>
+wallets:
+  broker_sync_enabled: <%= ENV.fetch("WALLET_BROKER_SYNC_ENABLED", "true") %>
+  funded_trader_ids: <%= ENV.fetch("FUNDED_TRADER_IDS", "weston,logan,gerrard") %>

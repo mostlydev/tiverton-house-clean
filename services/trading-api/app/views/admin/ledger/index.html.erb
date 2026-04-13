@@ -1,0 +1,94 @@
+<% content_for :title, "Ledger" %>
+
+<div class="admin-header">
+  <div class="breadcrumb">
+    <%= link_to "ADMIN", admin_root_path %>
+    <span class="breadcrumb-separator">/</span>
+    <span>LEDGER</span>
+  </div>
+  <h1>Ledger Entries</h1>
+</div>
+
+<div class="filters">
+  <%= form_with url: admin_ledger_path, method: :get, local: true do |f| %>
+    <div class="filter-group">
+      <label class="filter-label">Agent</label>
+      <%= f.select :agent_id,
+          options_for_select([['All Agents', '']] + Agent.pluck(:name, :agent_id), params[:agent_id]),
+          {},
+          { onchange: 'this.form.requestSubmit()' }
+      %>
+    </div>
+  <% end %>
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Agent</th>
+        <th>Type</th>
+        <th>Amount</th>
+        <th>Ticker</th>
+        <th>Quantity</th>
+        <th>Transaction ID</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @entries.each do |entry| %>
+        <tr>
+          <td class="mono"><%= entry.id %></td>
+          <td class="text-secondary"><%= entry.agent_id %></td>
+          <td>
+            <span class="badge badge-info"><%= entry.account_code %></span>
+          </td>
+          <td class="mono" style="color: <%= entry.amount >= 0 ? 'var(--accent-green)' : 'var(--accent-red)' %>">
+            <%= entry.amount >= 0 ? '+' : '' %>$<%= number_with_delimiter(entry.amount.round(2)) %>
+          </td>
+          <td class="mono"><%= entry.asset %></td>
+          <td class="mono">-</td>
+          <td class="mono text-secondary">
+            <%= link_to entry.ledger_transaction_id, "#" if entry.ledger_transaction %>
+          </td>
+          <td class="mono text-secondary"><%= entry.created_at.strftime("%m/%d %H:%M:%S") %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<%= paginate @entries if defined?(paginate) %>
+
+<h2 style="margin-top: 3rem;">Recent Transactions</h2>
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Source ID</th>
+        <th>Created</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @transactions.each do |txn| %>
+        <tr>
+          <td class="mono"><%= txn.id %></td>
+          <td>
+            <span class="badge badge-purple"><%= txn.source_type %></span>
+          </td>
+          <td class="text-secondary"><%= txn.description %></td>
+          <td class="mono"><%= txn.source_id || '-' %></td>
+          <td class="mono text-secondary"><%= txn.created_at.strftime("%m/%d %H:%M:%S") %></td>
+          <td>
+            <%= link_to "View →", admin_ledger_transactions_path(id: txn.id) %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

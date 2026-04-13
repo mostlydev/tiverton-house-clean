@@ -1,0 +1,94 @@
+<% content_for :title, "Wallet - #{@wallet.agent&.name}" %>
+
+<div class="admin-header">
+  <div class="breadcrumb">
+    <%= link_to "ADMIN", admin_root_path %>
+    <span class="breadcrumb-separator">/</span>
+    <%= link_to "WALLETS", admin_wallets_path %>
+    <span class="breadcrumb-separator">/</span>
+    <span><%= @wallet.agent&.name %></span>
+  </div>
+  <h1><%= @wallet.agent&.name %> Wallet</h1>
+</div>
+
+<div class="detail-grid">
+  <div class="detail-section">
+    <h3>Wallet Overview</h3>
+    <div class="detail-row">
+      <span class="detail-label">Agent</span>
+      <span class="detail-value">
+        <%= link_to @wallet.agent&.name || @wallet.agent_id, admin_agent_path(@wallet.agent) if @wallet.agent %>
+      </span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Wallet Size</span>
+      <span class="detail-value">$<%= number_with_delimiter(@wallet.wallet_size.round(2)) %></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Cash</span>
+      <span class="detail-value">$<%= number_with_delimiter(@wallet.cash.round(2)) %></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Invested</span>
+      <span class="detail-value">$<%= number_with_delimiter(@wallet.invested.round(2)) %></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Available</span>
+      <span class="detail-value">$<%= number_with_delimiter((@wallet.wallet_size - @wallet.invested).round(2)) %></span>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <h3>Metadata</h3>
+    <div class="detail-row">
+      <span class="detail-label">ID</span>
+      <span class="detail-value"><%= @wallet.id %></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Agent ID</span>
+      <span class="detail-value"><%= @wallet.agent_id %></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Created</span>
+      <span class="detail-value"><%= @wallet.created_at.strftime("%Y-%m-%d %H:%M") %></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Updated</span>
+      <span class="detail-value"><%= @wallet.updated_at.strftime("%Y-%m-%d %H:%M") %></span>
+    </div>
+  </div>
+</div>
+
+<h2>Recent Ledger Entries</h2>
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Type</th>
+        <th>Amount</th>
+        <th>Ticker</th>
+        <th>Quantity</th>
+        <th>Transaction ID</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @ledger_entries.each do |entry| %>
+        <tr>
+          <td class="mono"><%= entry.id %></td>
+          <td>
+            <span class="badge badge-info"><%= entry.account_code %></span>
+          </td>
+          <td class="mono" style="color: <%= entry.amount >= 0 ? 'var(--accent-green)' : 'var(--accent-red)' %>">
+            <%= entry.amount >= 0 ? '+' : '' %>$<%= number_with_delimiter(entry.amount.round(2)) %>
+          </td>
+          <td class="mono"><%= entry.asset %></td>
+          <td class="mono">-</td>
+          <td class="mono text-secondary"><%= entry.ledger_transaction_id %></td>
+          <td class="mono text-secondary"><%= entry.created_at.strftime("%m/%d %H:%M") %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

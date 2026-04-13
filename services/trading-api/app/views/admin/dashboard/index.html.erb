@@ -1,0 +1,115 @@
+<% content_for :title, "Dashboard" %>
+
+<div class="admin-header">
+  <div class="breadcrumb">
+    <span>ADMIN</span>
+    <span class="breadcrumb-separator">/</span>
+    <span>DASHBOARD</span>
+  </div>
+  <h1>System Overview</h1>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Total Trades</div>
+    <div class="stat-value"><%= number_with_delimiter(@stats[:trades]) %></div>
+    <div class="stat-sublabel">
+      <%= link_to "View all trades →", admin_trades_path %>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-label">Active Agents</div>
+    <div class="stat-value"><%= @stats[:agents] %></div>
+    <div class="stat-sublabel">
+      <%= link_to "View all agents →", admin_agents_path %>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-label">Open Positions</div>
+    <div class="stat-value"><%= number_with_delimiter(@stats[:positions]) %></div>
+    <div class="stat-sublabel">
+      <%= link_to "View all positions →", admin_positions_path %>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-label">Wallets</div>
+    <div class="stat-value"><%= @stats[:wallets] %></div>
+    <div class="stat-sublabel">
+      <%= link_to "View all wallets →", admin_wallets_path %>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-label">Ledger Entries</div>
+    <div class="stat-value"><%= number_with_delimiter(@stats[:ledger_entries]) %></div>
+    <div class="stat-sublabel">
+      <%= link_to "View ledger →", admin_ledger_path %>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-label">Broker Fills</div>
+    <div class="stat-value"><%= number_with_delimiter(@stats[:broker_fills]) %></div>
+    <div class="stat-sublabel">
+      <%= link_to "View fills →", admin_broker_fills_path %>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-label">Outbox Events</div>
+    <div class="stat-value"><%= number_with_delimiter(@stats[:outbox_events]) %></div>
+    <div class="stat-sublabel">
+      <%= link_to "View events →", admin_outbox_index_path %>
+    </div>
+  </div>
+</div>
+
+<h2>Recent Trades</h2>
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Agent</th>
+        <th>Ticker</th>
+        <th>Side</th>
+        <th>Quantity</th>
+        <th>Price</th>
+        <th>Status</th>
+        <th>Created</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @stats[:recent_trades].each do |trade| %>
+        <tr>
+          <td class="mono"><%= trade.id %></td>
+          <td><%= trade.agent&.name || trade.agent_id %></td>
+          <td class="mono"><strong><%= trade.ticker %></strong></td>
+          <td>
+            <span class="badge <%= trade.side == 'BUY' ? 'badge-success' : 'badge-danger' %>">
+              <%= trade.side %>
+            </span>
+          </td>
+          <td class="mono"><%= trade.qty_requested ? number_with_delimiter(trade.qty_requested) : (trade.amount_requested ? "$#{number_with_delimiter(trade.amount_requested.round(2))}" : '-') %></td>
+          <td class="mono"><%= trade.avg_fill_price ? "$#{number_with_precision(trade.avg_fill_price, precision: 2)}" : (trade.limit_price ? "$#{number_with_precision(trade.limit_price, precision: 2)}" : 'MARKET') %></td>
+          <td>
+            <span class="badge <%= status_badge_class(trade.status) %>">
+              <%= trade.status %>
+            </span>
+          </td>
+          <td class="mono text-secondary">
+            <%= trade.created_at.strftime("%Y-%m-%d %H:%M") %>
+          </td>
+          <td>
+            <%= link_to "View →", admin_trade_path(trade) %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+

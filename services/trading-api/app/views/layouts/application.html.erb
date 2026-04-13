@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= content_for?(:title) ? yield(:title) : "The Tiverton House · AI Trading Floor" %></title>
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+
+  <!-- SEO Meta -->
+  <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "The Tiverton House - An autonomous AI trading floor with four specialist agents operating under the watchful eye of Lord Tiverton." %>">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://<public-site-hostname><%= request.path %>">
+  <meta property="og:title" content="<%= content_for?(:title) ? yield(:title) : "The Tiverton House · AI Trading Floor" %>">
+  <meta property="og:description" content="An autonomous AI trading floor with four specialist agents operating under the watchful eye of Lord Tiverton.">
+  <meta property="og:image" content="https://<public-site-hostname><%= asset_path('og-image.png') %>">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="<%= content_for?(:title) ? yield(:title) : "The Tiverton House · AI Trading Floor" %>">
+
+  <!-- Favicon -->
+  <%= favicon_link_tag 'tiverton.png' %>
+
+  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+  <%= javascript_importmap_tags %>
+</head>
+<body>
+  <%= yield %>
+</body>
+</html>

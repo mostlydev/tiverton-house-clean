@@ -1,0 +1,76 @@
+<%
+  pnl = portfolio[:unrealized_pnl] || 0
+  pnl_class = pnl >= 0 ? 'positive' : 'negative'
+  pnl_sign = pnl >= 0 ? '+' : ''
+  equity = portfolio[:equity] || 0
+  cost_basis_total = equity - pnl
+  pnl_percent = cost_basis_total.abs > 0 ? ((pnl / cost_basis_total) * 100).round(2) : 0
+  position_count = positions.is_a?(Array) ? positions.length : positions.count
+  source = portfolio[:source].to_s
+%>
+
+<div class="portfolio-bar" id="portfolio-bar">
+  <div class="portfolio-bar-left">
+    <div class="portfolio-bar-equity">
+      <span class="value" id="pbar-equity"><%= number_to_currency(equity) %></span>
+      <span class="label">Equity</span>
+    </div>
+    <div class="portfolio-bar-change" id="pbar-change">
+      <span class="value <%= pnl_class %>"><%= pnl_sign %><%= number_to_currency(pnl) %></span>
+      <span class="percent <%= pnl_class %>">(<%= pnl_sign %><%= pnl_percent %>%)</span>
+    </div>
+  </div>
+  <div class="portfolio-bar-right">
+    <div class="portfolio-bar-stat">
+      <span class="value" id="pbar-positions"><%= position_count %></span>
+      <span class="label">Positions</span>
+    </div>
+    <div class="portfolio-bar-stat">
+      <span class="value" id="pbar-cash"><%= number_to_currency(portfolio[:cash]) %></span>
+      <span class="label">Cash</span>
+    </div>
+    <div class="portfolio-bar-stat">
+      <%
+        short_pnl = if pnl.abs >= 1000
+          "#{pnl_sign}#{(pnl / 1000.0).round(1)}k"
+        else
+          "#{pnl_sign}#{pnl.round(0)}"
+        end
+      %>
+      <span class="value <%= pnl_class %>" id="pbar-pnl"><%= short_pnl %></span>
+      <span class="label">Unrealized</span>
+    </div>
+    <div class="portfolio-bar-stat">
+      <span class="value" id="pbar-buying-power"><%= portfolio[:buying_power].present? ? number_to_currency(portfolio[:buying_power]) : "—" %></span>
+      <span class="label">Buying Power</span>
+    </div>
+    <div class="portfolio-bar-stat">
+      <%
+        sync_time = portfolio[:wallet_last_synced_at]
+        sync_label = portfolio[:data_timestamp_label].presence || 'Wallet Sync'
+        if sync_time
+          sync_ago = Time.current - sync_time
+          sync_text = if sync_ago < 60
+            "#{sync_ago.round}s ago"
+          elsif sync_ago < 3600
+            "#{(sync_ago / 60).round}m ago"
+          elsif sync_ago < 86400
+            "#{(sync_ago / 3600).round}h ago"
+          else
+            "#{(sync_ago / 86400).round}d ago"
+          end
+          sync_class = sync_ago > 300 ? 'stale' : 'fresh'
+        else
+          sync_text = "Never"
+          sync_class = 'stale'
+        end
+      %>
+      <span class="value <%= sync_class %>" id="pbar-sync" title="<%= sync_time&.strftime('%Y-%m-%d %H:%M:%S') || 'Never synced' %>"><%= sync_text %></span>
+      <span class="label"><%= sync_label %></span>
+    </div>
+    <div class="portfolio-bar-stat">
+      <span class="value source <%= source == 'alpaca_live' ? 'source-live' : 'source-internal' %>" id="pbar-source"><%= source == 'alpaca_live' ? "LIVE" : "INTERNAL" %></span>
+      <span class="label">Data Source</span>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,65 @@
+<% content_for :title, "Positions" %>
+
+<div class="admin-header">
+  <div class="breadcrumb">
+    <%= link_to "ADMIN", admin_root_path %>
+    <span class="breadcrumb-separator">/</span>
+    <span>POSITIONS</span>
+  </div>
+  <h1>All Positions</h1>
+</div>
+
+<div class="filters">
+  <%= form_with url: admin_positions_path, method: :get, local: true do |f| %>
+    <div class="filter-group">
+      <label class="filter-label">Agent</label>
+      <%= f.select :agent_id,
+          options_for_select([['All Agents', '']] + Agent.pluck(:name, :agent_id), params[:agent_id]),
+          {},
+          { onchange: 'this.form.requestSubmit()' }
+      %>
+    </div>
+  <% end %>
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Agent</th>
+        <th>Ticker</th>
+        <th>Quantity</th>
+        <th>Avg Cost</th>
+        <th>Current Price</th>
+        <th>Market Value</th>
+        <th>Unrealized P&L</th>
+        <th>Updated</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @positions.each do |position| %>
+        <tr>
+          <td class="mono"><%= position.id %></td>
+          <td><%= position.agent&.name || position.agent_id %></td>
+          <td class="mono"><strong><%= position.ticker %></strong></td>
+          <td class="mono"><%= number_with_delimiter(position.qty) %></td>
+          <td class="mono">$<%= number_with_precision(position.avg_entry_price, precision: 2) %></td>
+          <td class="mono">$<%= number_with_precision((position.current_value / position.qty), precision: 2) if position.qty > 0 %></td>
+          <td class="mono">$<%= number_with_delimiter(position.current_value.round(2)) %></td>
+          <td class="mono" style="color: <%= (position.current_value - (position.avg_entry_price * position.qty)) >= 0 ? 'var(--accent-green)' : 'var(--accent-red)' %>">
+            <% pnl = position.current_value - (position.avg_entry_price * position.qty) %>
+            <%= pnl >= 0 ? '+' : '' %>$<%= number_with_delimiter(pnl.round(2)) %>
+          </td>
+          <td class="mono text-secondary"><%= position.updated_at.strftime("%m/%d %H:%M") %></td>
+          <td>
+            <%= link_to "View →", admin_position_path(position) %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<%= paginate @positions if defined?(paginate) %>

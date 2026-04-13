@@ -1,0 +1,171 @@
+<% content_for :title, "#{@ticker} Research · The Tiverton House" %>
+
+<style>
+  nav {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-gold);
+    padding: 1rem 2rem;
+  }
+
+  .nav-content {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .nav-logo {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 1.3rem;
+    color: var(--accent-cream);
+    text-decoration: none;
+    letter-spacing: 1px;
+  }
+
+  .nav-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+  }
+
+  .nav-link:hover { color: var(--accent-gold); }
+
+  .content {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .page-title {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 2.5rem;
+    color: var(--accent-gold);
+    margin-bottom: 0.5rem;
+  }
+
+  .subtitle {
+    color: var(--text-muted);
+    font-style: italic;
+    margin-bottom: 2rem;
+  }
+
+  .research-content {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-gold);
+    border-radius: 8px;
+    padding: 2rem;
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 15px;
+    line-height: 1.8;
+    overflow-x: auto;
+  }
+
+  .research-content h1, .research-content h2, .research-content h3 {
+    font-family: 'Libre Baskerville', serif;
+    color: var(--accent-gold);
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .research-content h1 { font-size: 1.8rem; }
+  .research-content h2 { font-size: 1.4rem; }
+  .research-content h3 { font-size: 1.2rem; }
+
+  .research-content p { margin-bottom: 1rem; }
+  .research-content ul, .research-content ol { margin: 1rem 0 1rem 2rem; }
+  .research-content li { margin-bottom: 0.5rem; }
+
+  .research-content strong { color: var(--accent-cream); }
+  .research-content em { color: var(--text-secondary); }
+
+  .research-content code {
+    background: var(--bg-tertiary);
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 0.9em;
+  }
+
+  .research-content pre {
+    background: var(--bg-tertiary);
+    padding: 1rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 1rem 0;
+  }
+
+  .research-content pre code {
+    background: none;
+    padding: 0;
+  }
+
+  .research-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+  }
+
+  .research-content th, .research-content td {
+    border: 1px solid var(--border-gold);
+    padding: 0.75rem;
+    text-align: left;
+  }
+
+  .research-content th {
+    background: var(--bg-tertiary);
+    color: var(--accent-gold);
+  }
+
+  .research-content blockquote {
+    border-left: 3px solid var(--accent-gold);
+    padding-left: 1rem;
+    margin: 1rem 0;
+    color: var(--text-secondary);
+    font-style: italic;
+  }
+
+  .research-content a {
+    color: var(--accent-gold);
+    text-decoration: none;
+  }
+
+  .research-content a:hover { text-decoration: underline; }
+
+  .error {
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  footer {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-gold);
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-muted);
+    margin-top: 3rem;
+  }
+</style>
+
+<nav>
+  <div class="nav-content">
+    <%= link_to "Tiverton House", root_path, class: "nav-logo" %>
+    <%= link_to "← Dashboard", root_path, class: "nav-link" %>
+  </div>
+</nav>
+
+<div class="content">
+  <h1 class="page-title"><%= @ticker %></h1>
+  <p class="subtitle">Ticker Research Report</p>
+
+  <% if @error %>
+    <p class="error"><%= @error %></p>
+  <% elsif @content %>
+    <div class="research-content"><%= markdown(@content) %></div>
+  <% end %>
+</div>
+
+<footer>
+  <p>The Tiverton House Research</p>
+</footer>

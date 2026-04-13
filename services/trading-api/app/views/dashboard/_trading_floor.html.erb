@@ -1,0 +1,18 @@
+<%= turbo_frame_tag "trading-floor" do %>
+  <% if trading_floor[:available] && trading_floor[:items].any? %>
+    <div id="trading-floor-feed" class="trading-floor-content" data-controller="trading-floor">
+      <% trading_floor[:items].each_with_index do |item, index| %>
+        <% is_latest = (index == trading_floor[:items].length - 1) %>
+        <div class="feed-row <%= "latest" if is_latest %>">
+          <div class="feed-header">
+            <span class="feed-author"><%= item[:author] %></span>
+            <span class="feed-time"><%= item[:timestamp].strftime("%H:%M") %></span>
+          </div>
+          <div class="feed-msg"><%= format_discord_mentions(item[:msg]) %></div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="empty-state">No trading floor activity</div>
+  <% end %>
+<% end %>

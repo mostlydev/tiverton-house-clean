@@ -1,0 +1,22 @@
+FROM ghcr.io/openclaw/openclaw:2026.4.9
+
+CLAW_TYPE openclaw
+AGENT AGENTS.md
+
+MODEL primary anthropic/claude-haiku-4-5
+
+HANDLE discord
+
+CONFIGURE openclaw config set agents.defaults.heartbeat.every 15m
+CONFIGURE openclaw config set agents.defaults.heartbeat.target none
+CONFIGURE openclaw config set agents.defaults.timeoutSeconds 900
+CONFIGURE openclaw config set channels.discord.status online
+CONFIGURE openclaw config set tools.web.search.provider perplexity
+
+USER root
+RUN apt-get update -qq && apt-get install -y -qq jq && rm -rf /var/lib/apt/lists/*
+USER node
+
+TRACK apt npm
+PRIVILEGE worker root
+PRIVILEGE runtime claw-user

@@ -1,0 +1,77 @@
+<% content_for :title, "Outbox Event ##{@event.id}" %>
+
+<div class="admin-header">
+  <div class="breadcrumb">
+    <%= link_to "ADMIN", admin_root_path %>
+    <span class="breadcrumb-separator">/</span>
+    <%= link_to "OUTBOX", admin_outbox_index_path %>
+    <span class="breadcrumb-separator">/</span>
+    <span><%= @event.id %></span>
+  </div>
+  <h1>Outbox Event #<%= @event.id %></h1>
+</div>
+
+<div class="detail-grid">
+  <div class="detail-section">
+    <h3>Event Details</h3>
+    <div class="detail-row">
+      <span class="detail-label">ID</span>
+      <span class="detail-value"><%= @event.id %></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Event Type</span>
+      <span class="detail-value">
+        <span class="badge badge-purple"><%= @event.event_type %></span>
+      </span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Aggregate ID</span>
+      <span class="detail-value"><%= @event.aggregate_id %></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Status</span>
+      <span class="detail-value">
+        <span class="badge <%= outbox_status_class(@event.status) %>">
+          <%= @event.status %>
+        </span>
+      </span>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <h3>Processing Info</h3>
+    <div class="detail-row">
+      <span class="detail-label">Attempts</span>
+      <span class="detail-value"><%= @event.attempts || 0 %></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Created</span>
+      <span class="detail-value"><%= @event.created_at.strftime("%Y-%m-%d %H:%M:%S %Z") %></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Updated</span>
+      <span class="detail-value"><%= @event.updated_at.strftime("%Y-%m-%d %H:%M:%S %Z") %></span>
+    </div>
+    <% if @event.processed_at %>
+      <div class="detail-row">
+        <span class="detail-label">Processed</span>
+        <span class="detail-value"><%= @event.processed_at.strftime("%Y-%m-%d %H:%M:%S %Z") %></span>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<% if @event.payload.present? %>
+  <div class="detail-section" style="margin-bottom: 2rem;">
+    <h3>Payload</h3>
+    <div style="padding: 1rem; background: var(--bg-tertiary); border: 1px solid var(--border); font-family: 'Courier New', monospace; font-size: 0.875rem; line-height: 1.6; white-space: pre-wrap;"><%= JSON.pretty_generate(@event.payload) %></div>
+  </div>
+<% end %>
+
+<% if @event.error_message.present? %>
+  <div class="detail-section" style="margin-bottom: 2rem; border-color: var(--accent-red);">
+    <h3 style="color: var(--accent-red);">Error Message</h3>
+    <div style="padding: 1rem; background: var(--bg-tertiary); border: 1px solid var(--accent-red); font-family: 'Courier New', monospace; font-size: 0.875rem; line-height: 1.6; white-space: pre-wrap; color: var(--accent-red);"><%= @event.error_message %></div>
+  </div>
+<% end %>
+

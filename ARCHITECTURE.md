@@ -1,0 +1,158 @@
+# Tiverton House Architecture
+
+This document covers how the desk is wired, how agents interact with the system, and the operating rules the desk runs by.
+
+## Goals
+
+- One service of record for all trading state — agents don't maintain shadow copies
+- Compile-time wiring — topology, feeds, and context are resolved at `claw up`, not at runtime
+- Source-controlled behavior — agent contracts, policy, and routing rules live in the repo
+- Clean separation between commit-worthy source, generated runtime output, and live operational state
+
+## Agents
+
+| Agent | Role |
+|-------|------|
+| `tiverton` | Desk coordinator — compliance, traffic control, escalation |
+| `weston` | Momentum trader |
+| `logan` | Value trader |
+| `gerrard` | Macro and longer-horizon trader |
+| `danforth` | Credit and special situations trader |
+| `dundas` | News triage and routing |
+| `sentinel` | Fleet health and desk monitoring |
+
+Shared behavior (startup sequence, tool conventions, escalation rules) lives in `agents/_shared/`. Per-agent identity and role-specific rules live in `agents/<name>/IDENTITY.md`.
+
+The fleet is built from a small set of role-specific images:
+
+- `agents/_shared/OpenClawfile` — base for coordinators and monitoring
+- `agents/_shared/OpenClawfile.trader` — base for all traders
+- `agents/dundas/OpenClawfile` — news-specific build
+
+All extend `ghcr.io/openclaw/openclaw:latest`. Model routing goes through `cllama`.
+
+## Major Components
+
+### Control Plane
+
+Clawdapus compiles and manages the pod lifecycle:
+
+- `claw-pod.yml` is the source of truth for topology — agents, feeds, services, env wiring
+- `claw up -d` reads the pod file, builds or resolves images, materializes runtime files, renders `compose.generated.yml`, and starts the pod via Docker Compose
+- `.claw-runtime/` holds per-agent context directories (bearer tokens, feed manifests, contracts)
+- `.claw-*` directories hold persistent auth, memory, and session history
+
+Supporting control-plane services:
+
+- `cllama` — model proxy and feed injector; sits between agents and LLM providers
+- `claw-api` — fleet API; serves `fleet-alerts` feed and manages inter-agent routing
+- `claw-wall` — Discord channel context feed; polls `#trading-floor` and serves recent messages
+- `clawdash` — operator dashboard
+
+### System of Record
+
+`services/trading-api/` is the desk state authority:
+
+- Rails app, PostgreSQL, Redis, Sidekiq
+- Owns trades, wallets, positions, fills, watchlists, ledger state, and workflow transitions
+- Also computes and serves agent feed payloads (market context, momentum, value, risk)
+- Sidekiq handles polling, news ingestion, background automation
+
+## How Agents Interact With the Desk
+
+Agents use `trading-api.*` managed tools as the primary interface for all trading actions. This is not shell scripting — the tool bridge carries pod identity automatically and binds writes to the authenticated caller.
+
+Core tools available to traders:
+
+- `trading-api.get_market_context` — wallet, positions, watchlist with price motion
+- `trading-api.get_positions` — current holdings
+- `trading-api.get_quote` — live price for any ticker
+- `trading-api.propose_trade` — submit a trade proposal
+- `trading-api.confirm_trade` / `trading-api.pass_trade` / `trading-api.cancel_trade` — trade lifecycle
+- `trading-api.get_ticker_news` — recent news for a ticker
+
+Do not substitute shell wrappers or raw `curl` for tool-exposed actions. If a required `trading-api.*` tool is missing or failing, treat that as a system issue.
+
+Shell scripts under `scripts/` still exist and are used for diagnostics, audit, and bootstrap tasks — things that don't have a tool equivalent. If you have the `desk-scripts` skill, use it only for those purposes.
+
+## How Context Gets Into Agents
+
+Before each LLM call, `cllama` fetches the feeds that agent is subscribed to, wraps each in a labeled block, and appends them to the system prompt. No agent plugin or local cache is involved.
+
+Feed ownership by source:
+
+| Feed | Source | Frequency | Content |
+|------|--------|-----------|---------|
+| `market-context` | `trading-api` | 60s | Wallet, positions, watchlist, live prices |
+| `momentum-context` | `trading-api` | 60s | Volume spikes, RS vs SPY/QQQ, unusual volume flags |
+| `value-context` | `trading-api` | 300s | EV/EBITDA, FCF yield, dividend calendar, value screens |
+| `desk-risk-context` | `trading-api` | 30s | All traders' wallets, positions, risk alerts |
+| `fleet-alerts` | `claw-api` | 30s | Pod health and agent-level alerts |
+| `channel-context` | `claw-wall` | 30s | Last 20 messages from `#trading-floor` |
+
+The exact subscriptions per agent are declared in `claw-pod.yml`. Traders subscribe to their role-appropriate market feed. Coordinators and monitors subscribe to `desk-risk-context`. All agents subscribe to `channel-context`.
+
+The `trading-api` feed descriptor is generated by RailsTrail at image build time (`bundle exec rake rails_trail:claw_describe`) and emitted as `/rails/.claw-describe.json`. That generated descriptor is what makes feed names resolve conventionally through Clawdapus.
+
+## Request Flow
+
+For a Discord mention:
+
+1. Message arrives in the agent container
+2. OpenClaw gates on mention, creates a turn
+3. Turn goes to `cllama`
+4. `cllama` validates the bearer token and fetches subscribed feeds
+5. Feed content is injected into the model request
+6. Agent calls `trading-api.*` tools for reads and writes
+7. `trading-api` binds writes to the authenticated caller — do not pass `agent_id` or `actor` in tool payloads
+
+For background workflows:
+
+- Sidekiq polls news, generates routed dispatches
+- `dundas` triages and routes market catalysts
+- `sentinel` monitors `fleet-alerts` and desk risk
+- `tiverton` handles approval flow and desk-wide coordination
+
+## Desk Operating Rules
+
+- `trading-api` is the only source of truth for trades, wallets, positions, ledger state, and workflow transitions
+- Use `trading-api.*` tools for all tool-exposed trading actions; do not hand-roll API calls
+- `claw-pod.yml` is the source of truth for the live pod topology
+- Agent memory is for notes and reasoning only — not a shadow ledger
+- When a wrapper script already exists under `scripts/` for something that doesn't have a tool, use it instead of inventing a parallel flow
+- Shared outputs (research, reports) go to the shared surface; working notes and thesis stay in private surfaces
+- Watchlists and positions are API-owned; do not maintain file mirrors
+- Discord pings require explicit IDs in `<@DISCORD_ID>` form — plain `@name` text is prose and does not route
+
+## Storage and Persistence
+
+**Commit-worthy source:**
+- `claw-pod.yml`, `agents/`, `scripts/`, `policy/`, `docs/`, `services/trading-api/`
+
+**Generated runtime output — inspect but never hand-edit:**
+- `compose.generated.yml`, `.claw-runtime/`
+
+**Persistent local runtime state — not for git:**
+- `.claw-auth/`, `.claw-memory/`, `.claw-session-history/`, `.claw-state/`, `.claw-backups/`
+- Live `storage/` contents (news, research, reports, logs), `var/`
+
+**Logical storage surfaces:**
+
+| Surface | Path | Purpose |
+|---------|------|---------|
+| Shared news | `storage/shared/news/` | Routed news files and summaries |
+| Shared research | `storage/shared/research/tickers/` | Desk-visible research used for proposal gating |
+| Shared reports | `storage/shared/reports/` | Pre-market and end-of-day reports |
+| Shared logs | `storage/shared/logs/` | Floor sync and operator-visible logs |
+| Private memory | `storage/private/<agent>/memory/session.md` | Agent's active session notes |
+| Private notes | `storage/private/<agent>/notes/<ticker>.md` | Ticker-specific thesis notes |
+
+Watchlists and positions are not file-backed — they're API state, accessed through tools and injected feeds.
+
+## Operational Notes
+
+- `trading-api` is published on host port `4000`; most other service traffic stays inside `claw-internal`
+- `claw compose` is the preferred operator entrypoint for compose operations
+- `compose.generated.yml` is generated — edit `claw-pod.yml` instead
+- `rspec` does not run inside the live `trading-api` container (production mode); syntax-check changed files with `claw compose exec -T trading-api ruby -c <file>`
+- After app code changes: `claw compose restart trading-api` and verify with the `/up` endpoint

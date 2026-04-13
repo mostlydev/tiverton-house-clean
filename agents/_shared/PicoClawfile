@@ -1,0 +1,15 @@
+FROM docker.io/sipeed/picoclaw:latest
+
+RUN apk add --no-cache bash curl jq
+
+CLAW_TYPE picoclaw
+AGENT AGENTS.md
+
+MODEL primary openrouter/anthropic/claude-sonnet-4-6
+MODEL fallback anthropic/claude-haiku-4-5
+
+HANDLE discord
+
+CONFIGURE picoclaw config set agents.defaults.restrict_to_workspace false
+CONFIGURE picoclaw config set agents.defaults.allow_read_outside_workspace true
+CONFIGURE picoclaw config set channels.discord.mention_only true

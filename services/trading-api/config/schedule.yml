@@ -1,0 +1,131 @@
+# Scheduled jobs configuration
+# Cron syntax: minute hour day month weekday
+# See: https://crontab.guru/
+
+# Reconcile orders every 30 seconds (0, 30 seconds of every minute)
+# Note: sidekiq-cron doesn't support subsecond intervals, so we run twice per minute
+order_reconciliation_0:
+  cron: "*/1 * * * *"
+  class: "OrderReconciliationJob"
+  queue: default
+  active_job: true
+  description: "Reconcile executing orders with Alpaca (every minute)"
+
+# Update prices and record samples every minute (MarketHours gate)
+price_update:
+  cron: "*/1 * * * *"
+  class: "PriceUpdateJob"
+  queue: default
+  active_job: true
+  description: "Refresh positions current_value and record price samples"
+
+# Check for stale trades every 5 minutes
+stale_trade_check:
+  cron: "*/5 * * * *"
+  class: "StaleTradeCheckJob"
+  queue: default
+  active_job: true
+  description: "Timeout stale executions and request reconfirmation"
+
+# Release queued trades when their scheduled window opens
+release_queued_trades:
+  cron: "*/1 * * * *"
+  class: "ReleaseQueuedTradesJob"
+  queue: default
+  active_job: true
+  description: "Release queued trades at their scheduled execution window"
+
+# Poll Alpaca news on weekdays 6 AM - 6 PM only
+news_poll_weekday_hours:
+  cron: "*/5 6-18 * * 1-5"
+  class: "NewsPollJob"
+  queue: default
+  active_job: true
+  description: "Fetch Alpaca news every 5 minutes, weekdays 6 AM - 6 PM"
+
+
+# Process outbox events for exactly-once notification delivery
+# Runs every 30 seconds to minimize notification latency
+outbox_processor:
+  cron: "*/1 * * * *"
+  class: "OutboxProcessorJob"
+  queue: default
+  active_job: true
+  description: "Process outbox events for trade notifications"
+
+# Ingest Alpaca activities (fills, dividends, fees) during market hours
+# Primary source for broker_verified fill records
+activities_ingestion_market_hours:
+  cron: "*/5 9-16 * * 1-5"
+  class: "AccountActivitiesIngestionJob"
+  queue: default
+  active_job: true
+  description: "Ingest Alpaca activities every 5 minutes during market hours"
+
+# Ingest Alpaca activities during off-hours (lower frequency)
+activities_ingestion_off_hours:
+  cron: "*/15 0-8,17-23 * * *"
+  class: "AccountActivitiesIngestionJob"
+  queue: default
+  active_job: true
+  description: "Ingest Alpaca activities every 15 minutes when markets are closed"
+
+# Alpaca account snapshot (source of truth for cash/buying_power)
+broker_account_snapshot:
+  cron: "*/5 * * * *"
+  class: "BrokerAccountSnapshotJob"
+  queue: default
+  active_job: true
+  description: "Snapshot Alpaca account cash/equity/buying_power every 5 minutes"
+
+# Clean up old news articles
+# Removes LOW/MEDIUM articles older than 14 days from database
+# Removes LOW/MEDIUM files older than 24h from disk (keeps HIGH indefinitely)
+news_cleanup:
+  cron: "0 2 * * *"
+  class: "NewsCleanupJob"
+  queue: default
+  active_job: true
+  description: "Clean up old LOW/MEDIUM news articles (database + disk)"
+
+# Refresh fundamental data for all held equity positions
+# Runs at 6:30 AM ET on weekdays (before pre-market research)
+# Skips crypto pairs and known ETFs; includes watchlist equities too
+fundamentals_refresh:
+  cron: "30 6 * * 1-5"
+  class: "FundamentalsRefreshJob"
+  queue: low
+  active_job: true
+  description: "Refresh Financial Datasets fundamentals for tracked equity tickers"
+
+# Refresh forward dividend snapshots and slower value signals after fundamentals complete
+dividend_snapshot_refresh:
+  cron: "45 6 * * 1-5"
+  class: "DividendSnapshotRefreshJob"
+  queue: low
+  active_job: true
+  description: "Refresh dividend snapshots and value signals for tracked equity tickers"
+
+# Catch up missed bars after overnight downtime so RS and volume baselines stay warm
+market_data_catchup_backfill:
+  cron: "15 6 * * 1-5"
+  class: "MarketDataCatchupBackfillJob"
+  queue: low
+  active_job: true
+  description: "Backfill recent minute bars for tracked equities plus benchmarks"
+
+# Post desk performance digest to #trading-floor before market open
+desk_performance_digest_morning:
+  cron: "10 8 * * 1-5"
+  class: "DeskPerformanceDigestJob"
+  queue: notifications
+  active_job: true
+  description: "Publish desk performance digest to #trading-floor at 08:10 ET"
+
+# Post desk performance digest to #trading-floor after market close
+desk_performance_digest_evening:
+  cron: "10 16 * * 1-5"
+  class: "DeskPerformanceDigestJob"
+  queue: notifications
+  active_job: true
+  description: "Publish desk performance digest to #trading-floor at 16:10 ET"

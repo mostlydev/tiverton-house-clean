@@ -1,0 +1,78 @@
+<% content_for :title, "The Tiverton House · AI Trading Floor" %>
+
+<div class="dashboard-page" data-controller="auto-refresh" data-auto-refresh-interval-value="30000">
+  <!-- Sticky header -->
+  <%= render "dashboard/header", market_status: @market_status, health: @health %>
+
+  <!-- Deployment notice -->
+  <div class="deployment-notice">
+    <strong>New Deployment</strong> &mdash; Tiverton House is now running as a containerized pod with live capital. Prior trading history from the bare-metal era has been archived. All activity shown here is from the current deployment forward.
+  </div>
+
+  <!-- News ticker -->
+  <div class="news-ticker">
+    <%= turbo_frame_tag "news-ticker", src: dashboard_news_ticker_path, loading: :lazy do %>
+      <div id="news-ticker" class="flip-ticker" aria-label="News ticker"></div>
+    <% end %>
+  </div>
+
+  <!-- Sticky Portfolio Bar -->
+  <%= turbo_frame_tag "portfolio-bar", src: dashboard_portfolio_bar_path do %>
+    <%= render "dashboard/portfolio_bar", portfolio: @portfolio, positions: @positions %>
+  <% end %>
+
+  <div class="dashboard">
+    <!-- Lord Tiverton intro -->
+    <%= render "dashboard/tiverton_hero" %>
+
+    <!-- Card: Traders (sticky) -->
+    <div class="card traders-card">
+      <div class="card-header">
+        <span class="card-title">Traders</span>
+      </div>
+      <div class="card-body">
+        <%= render "dashboard/agents_grid", agents: @agents %>
+      </div>
+    </div>
+
+    <!-- Card: Holdings -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Holdings</span>
+      </div>
+      <div class="card-body">
+        <%= turbo_frame_tag "positions", src: dashboard_positions_path do %>
+          <%= render "dashboard/positions", positions: @positions %>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Card: Trading Floor Feed -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">
+          <span class="live-indicator"></span> Trading Floor
+        </span>
+      </div>
+      <div class="card-body">
+        <%= turbo_frame_tag "trading-floor", src: dashboard_trading_floor_path, loading: :lazy do %>
+          <%= render "dashboard/trading_floor", trading_floor: @trading_floor %>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Card: Trading Activity -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Trading Activity</span>
+      </div>
+      <div class="card-body">
+        <%= render "dashboard/trading_activity",
+                   trades_summary: @trades_summary,
+                   pending_trades: @pending_trades,
+                   approved_queue: @approved_queue,
+                   recent_trades: @recent_trades %>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,88 @@
+<% content_for :title, "Outbox Events" %>
+
+<div class="admin-header">
+  <div class="breadcrumb">
+    <%= link_to "ADMIN", admin_root_path %>
+    <span class="breadcrumb-separator">/</span>
+    <span>OUTBOX EVENTS</span>
+  </div>
+  <h1>Outbox Events</h1>
+</div>
+
+<div class="filters">
+  <%= form_with url: admin_outbox_index_path, method: :get, local: true do |f| %>
+    <div class="filter-group">
+      <label class="filter-label">Status</label>
+      <%= f.select :status,
+          options_for_select([
+            ['All Statuses', ''],
+            ['pending', 'pending'],
+            ['processing', 'processing'],
+            ['completed', 'completed'],
+            ['failed', 'failed']
+          ], params[:status]),
+          {},
+          { onchange: 'this.form.requestSubmit()' }
+      %>
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label">Event Type</label>
+      <%= f.select :event_type,
+          options_for_select([
+            ['All Types', ''],
+            ['trade.proposed', 'trade.proposed'],
+            ['trade.approved', 'trade.approved'],
+            ['trade.executed', 'trade.executed'],
+            ['trade.filled', 'trade.filled']
+          ], params[:event_type]),
+          {},
+          { onchange: 'this.form.requestSubmit()' }
+      %>
+    </div>
+  <% end %>
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Event Type</th>
+        <th>Aggregate ID</th>
+        <th>Status</th>
+        <th>Attempt Count</th>
+        <th>Payload</th>
+        <th>Created</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @events.each do |event| %>
+        <tr>
+          <td class="mono"><%= event.id %></td>
+          <td>
+            <span class="badge badge-purple"><%= event.event_type %></span>
+          </td>
+          <td class="mono text-secondary"><%= event.aggregate_id %></td>
+          <td>
+            <span class="badge <%= outbox_status_class(event.status) %>">
+              <%= event.status %>
+            </span>
+          </td>
+          <td class="mono"><%= event.attempts || 0 %></td>
+          <td class="mono text-muted" style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">
+            <%= event.payload.to_json if event.payload.present? %>
+          </td>
+          <td class="mono text-secondary"><%= event.created_at.strftime("%m/%d %H:%M:%S") %></td>
+          <td>
+            <%= link_to "View →", admin_outbox_path(event) %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<%= paginate @events if defined?(paginate) %>
+

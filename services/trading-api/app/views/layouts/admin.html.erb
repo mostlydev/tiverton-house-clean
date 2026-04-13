@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= content_for(:title) || "Admin" %> | Trading API Admin</title>
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+
+  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+  <%= javascript_importmap_tags %>
+
+  <style>
+    :root {
+      --bg-primary: #0a0e14;
+      --bg-secondary: #151a23;
+      --bg-tertiary: #1f2937;
+      --border: #2d3748;
+      --text-primary: #e2e8f0;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-cyan: #06b6d4;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+      --accent-yellow: #f59e0b;
+      --accent-purple: #a855f7;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* Terminal-style monospace headers */
+    h1, h2, h3, .mono-header {
+      font-family: 'Courier New', Courier, monospace;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-size: 2rem;
+      color: var(--accent-cyan);
+      text-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+    }
+
+    h3 {
+      font-size: 1.125rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+    }
+
+    /* Layout */
+    .admin-layout {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .admin-sidebar {
+      background: var(--bg-secondary);
+      border-right: 2px solid var(--border);
+      padding: 2rem 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .admin-logo {
+      padding: 0 1.5rem 2rem;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 2rem;
+    }
+
+    .admin-logo h1 {
+      font-size: 1.25rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .admin-logo p {
+      font-family: 'Courier New', monospace;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+    }
+
+    .admin-nav {
+      list-style: none;
+    }
+
+    .nav-section {
+      margin-bottom: 2rem;
+    }
+
+    .nav-section-title {
+      font-family: 'Courier New', monospace;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      padding: 0 1.5rem 0.5rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .nav-link {
+      display: block;
+      padding: 0.75rem 1.5rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: all 0.15s ease;
+      font-size: 0.9375rem;
+    }
+
+    .nav-link:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border-left-color: var(--accent-cyan);
+    }
+
+    .nav-link.active {
+      background: var(--bg-tertiary);
+      color: var(--accent-cyan);
+      border-left-color: var(--accent-cyan);
+      font-weight: 600;
+    }
+
+    /* Main content */
+    .admin-main {
+      padding: 3rem;
+      max-width: 1800px;
+    }
+
+    .admin-header {
+      margin-bottom: 3rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .admin-header h1 {
+      margin-bottom: 0.5rem;
+    }
+
+    .breadcrumb {
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+
+    .breadcrumb a {
+      color: var(--accent-cyan);
+      text-decoration: none;
+    }
+
+    .breadcrumb a:hover {
+      text-decoration: underline;
+    }
+
+    .breadcrumb-separator {
+      margin: 0 0.5rem;
+      color: var(--border);
+    }
+
+    /* Stats grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    .stat-card {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border);
+      padding: 1.5rem;
+      transition: all 0.2s ease;
+    }
+
+    .stat-card:hover {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.1);
+    }
+
+    .stat-label {
+      font-family: 'Courier New', monospace;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+      font-family: 'Courier New', monospace;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      line-height: 1;
+    }
+
+    .stat-sublabel {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-top: 0.5rem;
+    }
+
+    /* Tables */
+    .table-container {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border);
+      overflow-x: auto;
+      margin-bottom: 2rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead {
+      background: var(--bg-tertiary);
+    }
+
+    th {
+      font-family: 'Courier New', monospace;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-secondary);
+      padding: 1rem 1.5rem;
+      text-align: left;
+      border-bottom: 2px solid var(--border);
+    }
+
+    td {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9375rem;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr {
+      transition: background 0.1s ease;
+    }
+
+    tbody tr:hover {
+      background: var(--bg-tertiary);
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: 1px solid;
+    }
+
+    .badge-success {
+      color: var(--accent-green);
+      border-color: var(--accent-green);
+      background: rgba(16, 185, 129, 0.1);
+    }
+
+    .badge-danger {
+      color: var(--accent-red);
+      border-color: var(--accent-red);
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .badge-warning {
+      color: var(--accent-yellow);
+      border-color: var(--accent-yellow);
+      background: rgba(245, 158, 11, 0.1);
+    }
+
+    .badge-info {
+      color: var(--accent-cyan);
+      border-color: var(--accent-cyan);
+      background: rgba(6, 182, 212, 0.1);
+    }
+
+    .badge-purple {
+      color: var(--accent-purple);
+      border-color: var(--accent-purple);
+      background: rgba(168, 85, 247, 0.1);
+    }
+
+    /* Links */
+    a {
+      color: var(--accent-cyan);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    /* Monospace data */
+    .mono {
+      font-family: 'Courier New', monospace;
+    }
+
+    .text-muted {
+      color: var(--text-muted);
+    }
+
+    .text-secondary {
+      color: var(--text-secondary);
+    }
+
+    /* Filters */
+    .filters {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border);
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: end;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .filter-label {
+      font-family: 'Courier New', monospace;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    select, input[type="text"], input[type="number"] {
+      background: var(--bg-primary);
+      border: 2px solid var(--border);
+      color: var(--text-primary);
+      padding: 0.5rem 1rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+    }
+
+    select:focus, input:focus {
+      outline: none;
+      border-color: var(--accent-cyan);
+    }
+
+    button, .btn {
+      background: var(--accent-cyan);
+      color: var(--bg-primary);
+      border: none;
+      padding: 0.5rem 1.5rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    button:hover, .btn:hover {
+      background: var(--accent-green);
+      text-decoration: none;
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+    }
+
+    /* Detail view */
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .detail-section {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border);
+      padding: 1.5rem;
+    }
+
+    .detail-section h3 {
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+
+    .detail-label {
+      font-family: 'Courier New', monospace;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .detail-value {
+      font-family: 'Courier New', monospace;
+      color: var(--text-primary);
+      text-align: right;
+    }
+
+    /* Pagination */
+    .pagination {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      margin-top: 2rem;
+    }
+
+    .pagination a, .pagination span {
+      padding: 0.5rem 1rem;
+      background: var(--bg-secondary);
+      border: 2px solid var(--border);
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+      color: var(--text-primary);
+    }
+
+    .pagination a:hover {
+      border-color: var(--accent-cyan);
+      background: var(--bg-tertiary);
+      text-decoration: none;
+    }
+
+    .pagination .current {
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .admin-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .admin-sidebar {
+        position: static;
+        height: auto;
+        border-right: none;
+        border-bottom: 2px solid var(--border);
+      }
+
+      .admin-main {
+        padding: 2rem 1.5rem;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="admin-logo">
+        <h1>// ADMIN</h1>
+        <p>TRADING API v1.0</p>
+      </div>
+
+      <nav class="admin-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Overview</div>
+          <ul style="list-style: none;">
+            <li><%= link_to "Dashboard", admin_root_path, class: "nav-link #{'active' if current_page?(admin_root_path)}" %></li>
+          </ul>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Core Data</div>
+          <ul style="list-style: none;">
+            <li><%= link_to "Trades", admin_trades_path, class: "nav-link #{'active' if controller_name == 'trades'}" %></li>
+            <li><%= link_to "Agents", admin_agents_path, class: "nav-link #{'active' if controller_name == 'agents'}" %></li>
+            <li><%= link_to "Positions", admin_positions_path, class: "nav-link #{'active' if controller_name == 'positions'}" %></li>
+            <li><%= link_to "Wallets", admin_wallets_path, class: "nav-link #{'active' if controller_name == 'wallets'}" %></li>
+          </ul>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Accounting</div>
+          <ul style="list-style: none;">
+            <li><%= link_to "Ledger Entries", admin_ledger_path, class: "nav-link #{'active' if controller_name == 'ledger' && action_name == 'index'}" %></li>
+            <li><%= link_to "Transactions", admin_ledger_transactions_path, class: "nav-link #{'active' if controller_name == 'ledger' && action_name == 'transactions'}" %></li>
+            <li><%= link_to "Adjustments", admin_ledger_adjustments_path, class: "nav-link #{'active' if controller_name == 'ledger' && action_name == 'adjustments'}" %></li>
+          </ul>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Broker Integration</div>
+          <ul style="list-style: none;">
+            <li><%= link_to "Fills", admin_broker_fills_path, class: "nav-link #{'active' if controller_name == 'broker' && action_name == 'fills'}" %></li>
+            <li><%= link_to "Orders", admin_broker_orders_path, class: "nav-link #{'active' if controller_name == 'broker' && action_name == 'orders'}" %></li>
+            <li><%= link_to "Events", admin_broker_events_path, class: "nav-link #{'active' if controller_name == 'broker' && action_name == 'events'}" %></li>
+            <li><%= link_to "Activity", admin_broker_activity_path, class: "nav-link #{'active' if controller_name == 'broker' && action_name == 'activity'}" %></li>
+          </ul>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">System</div>
+          <ul style="list-style: none;">
+            <li><%= link_to "Outbox Events", admin_outbox_index_path, class: "nav-link #{'active' if controller_name == 'outbox'}" %></li>
+          </ul>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="admin-main">
+      <%= yield %>
+    </main>
+  </div>
+</body>
+</html>

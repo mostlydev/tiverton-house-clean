@@ -1,0 +1,711 @@
+# ── Topology ──────────────────────────────────────────────────────────
+
+x-handle-topology:
+  floor-guild: &floor_guild
+    - id: "${DISCORD_GUILD_ID}"
+      name: "Trading Floor"
+      channels:
+        - id: "${DISCORD_TRADING_FLOOR_CHANNEL}"
+          name: trading-floor
+  floor-infra-guild: &floor_infra_guild
+    - id: "${DISCORD_GUILD_ID}"
+      name: "Trading Floor"
+      channels:
+        - id: "${DISCORD_TRADING_FLOOR_CHANNEL}"
+          name: trading-floor
+        - id: "${DISCORD_INFRA_CHANNEL}"
+          name: infra
+
+x-paths:
+  desk-shared-root: &desk_shared_root ${REPO_ROOT}/storage/shared
+  desk-public-root: &desk_public_root ${REPO_ROOT}/storage/shared/public
+  desk-private-root: &desk_private_root ${REPO_ROOT}/storage/private
+  postgres-data-root: &postgres_data_root ${REPO_ROOT}/var/postgres
+  redis-data-root: &redis_data_root ${REPO_ROOT}/var/redis
+
+x-discord-floor-surface: &discord_floor_surface
+  channel://discord:
+    allow_from_handles: true
+    guilds:
+      "${DISCORD_GUILD_ID}":
+        require_mention: true
+        users:
+          - "${OPERATOR_DISCORD_ID}"
+          - "${LEVIATHAN_DISCORD_ID}"
+
+x-feeds:
+  base-trader-feeds: &base_trader_feeds
+    - market-context
+  weston-feeds: &weston_feeds
+    - market-context
+    - momentum-context
+  logan-feeds: &logan_feeds
+    - market-context
+    - value-context
+  risk-feeds: &risk_feeds
+    - desk-risk-context
+  sentinel-feeds: &sentinel_feeds
+    - desk-risk-context
+    - fleet-alerts
+
+x-tools:
+  read-only-context-tools: &read_only_context_tools
+    - service: trading-api
+      allow:
+        - get_market_context
+        - get_quote
+        - get_positions
+        - get_news_latest
+        - get_ticker_news
+        - get_watchlist
+
+# ── Pod Governance ────────────────────────────────────────────────────
+
+x-claw:
+  pod: tiverton-house
+  master: sentinel
+  handles-defaults:
+    discord:
+      guilds: *floor_guild
+  cllama-defaults:
+    proxy: [passthrough]
+    env:
+      OPENROUTER_API_KEY: "${OPENROUTER_API_KEY}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY}"
+      GEMINI_API_KEY: "${GEMINI_API_KEY}"
+      XAI_API_KEY: "${XAI_API_KEY}"
+  surfaces-defaults:
+    - *discord_floor_surface
+    - "service://trading-api"
+    - "host://${REPO_ROOT}/storage/shared read-write"
+    - "host://${REPO_ROOT}/storage/private read-write"
+    - "host://${REPO_ROOT}/scripts read-only"
+  skills-defaults:
+    - ./docs/skills/desk-scripts.md
+    - ./policy/risk-limits.md
+    - ./policy/approval-workflow.md
+  tools-defaults:
+    - service: trading-api
+      allow:
+        - get_market_context
+        - get_quote
+        - get_trade
+        - list_trades
+        - get_positions
+        - get_news_latest
+        - get_ticker_news
+        - get_watchlist
+        - add_to_watchlist
+        - remove_from_watchlist
+
+networks:
+  claw-internal: {}
+
+# ── Shared Anchors ────────────────────────────────────────────────────
+
+x-openclaw-healthcheck: &openclaw_healthcheck
+  test: ["CMD-SHELL", "pgrep -f openclaw-gateway >/dev/null"]
+  interval: 30s
+  timeout: 5s
+  retries: 3
+
+x-openclaw-service: &openclaw_service
+  image: tiverton-house-openclaw:latest
+  build:
+    context: .
+    dockerfile: ./agents/_shared/OpenClawfile
+  healthcheck: *openclaw_healthcheck
+
+x-trader-openclaw-service: &trader_openclaw_service
+  image: tiverton-house-trader-openclaw:latest
+  build:
+    context: .
+    dockerfile: ./agents/_shared/OpenClawfile.trader
+  healthcheck: *openclaw_healthcheck
+
+x-trader-service: &trader_service
+  <<: *openclaw_service
+  mem_limit: 1536m
+
+x-funded-trader-service: &funded_trader_service
+  <<: *trader_openclaw_service
+  mem_limit: 1536m
+
+x-agent-env: &agent_env
+  TZ: "${TZ}"
+  DISCORD_AUTO_THREAD: "false"
+  DISCORD_GUILD_ID: "${DISCORD_GUILD_ID}"
+  DISCORD_TRADING_FLOOR_CHANNEL: "${DISCORD_TRADING_FLOOR_CHANNEL}"
+  DISCORD_INFRA_CHANNEL: "${DISCORD_INFRA_CHANNEL}"
+  OPERATOR_DISCORD_ID: "${OPERATOR_DISCORD_ID}"
+  LEVIATHAN_DISCORD_ID: "${LEVIATHAN_DISCORD_ID}"
+  TIVERTON_DISCORD_ID: "${TIVERTON_DISCORD_ID}"
+  WESTON_DISCORD_ID: "${WESTON_DISCORD_ID}"
+  LOGAN_DISCORD_ID: "${LOGAN_DISCORD_ID}"
+  DUNDAS_DISCORD_ID: "${DUNDAS_DISCORD_ID}"
+  GERRARD_DISCORD_ID: "${GERRARD_DISCORD_ID}"
+  DANFORTH_DISCORD_ID: "${DANFORTH_DISCORD_ID}"
+  SENTINEL_DISCORD_ID: "${SENTINEL_DISCORD_ID}"
+  ALLEN_DISCORD_ID: "${ALLEN_DISCORD_ID}"
+  DISCORD_ALLOWED_USERS: "${OPERATOR_DISCORD_ID},${LEVIATHAN_DISCORD_ID},${TIVERTON_DISCORD_ID},${WESTON_DISCORD_ID},${LOGAN_DISCORD_ID},${DUNDAS_DISCORD_ID},${GERRARD_DISCORD_ID},${DANFORTH_DISCORD_ID},${ALLEN_DISCORD_ID}"
+  DISCORD_ALLOW_BOTS: "mentions"
+  DISCORD_HOME_CHANNEL: "${DISCORD_TRADING_FLOOR_CHANNEL}"
+  DISCORD_HOME_CHANNEL_NAME: "trading-floor"
+  TRADING_API_BASE_URL: "http://trading-api:4000"
+  DESK_SCRIPTS_ROOT: ${REPO_ROOT}/scripts
+  DESK_SHARED_ROOT: *desk_shared_root
+  DESK_PUBLIC_ROOT: *desk_public_root
+  DESK_PRIVATE_ROOT: *desk_private_root
+  OPENCLAW_HOME: "${OPENCLAW_HOME:-/app/state}"
+  OPENCLAW_STATE_ROOT: "${OPENCLAW_STATE_ROOT:-/app/state}"
+  OPENCLAW_CONFIG_PATH: "${OPENCLAW_CONFIG_PATH:-/app/config/openclaw.json}"
+  PERPLEXITY_KEY: "${PERPLEXITY_KEY}"
+  PERPLEXITY_API_KEY: "${PERPLEXITY_KEY}"
+  NODE_OPTIONS: "--max-old-space-size=1024"
+
+x-trader-env: &trader_env
+  <<: *agent_env
+
+x-contracts:
+  shared-agent: &shared_agent ./agents/_shared/AGENTS.md
+  identity-include: &identity_include
+    id: identity
+    mode: guide
+  trader-role-include: &trader_role_include
+    id: trader_role
+    file: ./agents/_shared/trader-base.md
+    mode: guide
+  coordinator-role-include: &coordinator_role_include
+    id: coordinator_role
+    file: ./agents/_shared/coordinator-base.md
+    mode: guide
+  risk-limits-include: &risk_limits_include
+    id: risk_limits
+    file: ./policy/risk-limits.md
+    mode: guide
+  approval-workflow-include: &approval_workflow_include
+    id: approval_workflow
+    file: ./policy/approval-workflow.md
+    mode: guide
+  escalation-include: &escalation_include
+    id: escalation
+    file: ./policy/escalation.md
+    mode: guide
+
+x-trader-claw: &trader_claw
+  agent: *shared_agent
+  feeds: *base_trader_feeds
+
+x-rails-runtime: &rails_runtime
+  build:
+    context: ./services/trading-api
+    dockerfile: Dockerfile
+  volumes:
+    - type: bind
+      source: ${REPO_ROOT}/policy
+      target: /rails/policy
+      read_only: true
+    - type: bind
+      source: ${REPO_ROOT}/scripts
+      target: ${REPO_ROOT}/scripts
+    - type: bind
+      source: *desk_shared_root
+      target: *desk_shared_root
+    - type: bind
+      source: *desk_private_root
+      target: *desk_private_root
+
+x-rails-env: &rails_env
+  TZ: "${TZ}"
+  RAILS_ENV: production
+  RAILS_MASTER_KEY: "${RAILS_MASTER_KEY}"
+  SECRET_KEY_BASE: "${SECRET_KEY_BASE}"
+  DATABASE_URL: "postgresql://trading:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}"
+  REDIS_URL: "redis://redis:6379/${REDIS_DATABASE}"
+  BROKER_CUTOVER_AT: "${BROKER_CUTOVER_AT}"
+  ALPACA_API_KEY: "${ALPACA_API_KEY}"
+  ALPACA_SECRET_KEY: "${ALPACA_SECRET_KEY}"
+  ALPACA_ENV: "${ALPACA_ENV}"
+  ALPACA_DATA_ENDPOINT: "${ALPACA_DATA_ENDPOINT}"
+  ALPACA_DATA_URL: "${ALPACA_DATA_URL}"
+  WALLET_BROKER_SYNC_ENABLED: "${WALLET_BROKER_SYNC_ENABLED:-true}"
+  FUNDED_TRADER_IDS: "${FUNDED_TRADER_IDS:-weston,logan,gerrard}"
+  DISCORD_BOT_TOKEN: "${DISCORD_TRADING_API_BOT_TOKEN}"
+  DISCORD_TRADING_FLOOR_CHANNEL_ID: "${DISCORD_TRADING_FLOOR_CHANNEL}"
+  DISCORD_INFRA_CHANNEL_ID: "${DISCORD_INFRA_CHANNEL}"
+  DISCORD_TRADING_FLOOR_WEBHOOK: "${DISCORD_TRADING_FLOOR_WEBHOOK}"
+  DISCORD_INFRA_WEBHOOK: "${DISCORD_INFRA_WEBHOOK}"
+  DISCORD_TRADING_API_WEBHOOK: "${DISCORD_TRADING_API_WEBHOOK}"
+  TRADING_API_INTERNAL_TOKEN: "${TRADING_API_INTERNAL_TOKEN}"
+  TIVERTON_TRADING_API_TOKEN: "${TIVERTON_TRADING_API_TOKEN}"
+  WESTON_TRADING_API_TOKEN: "${WESTON_TRADING_API_TOKEN}"
+  LOGAN_TRADING_API_TOKEN: "${LOGAN_TRADING_API_TOKEN}"
+  GERRARD_TRADING_API_TOKEN: "${GERRARD_TRADING_API_TOKEN}"
+  DANFORTH_TRADING_API_TOKEN: "${DANFORTH_TRADING_API_TOKEN}"
+  DUNDAS_TRADING_API_TOKEN: "${DUNDAS_TRADING_API_TOKEN}"
+  ALLEN_TRADING_API_TOKEN: "${ALLEN_TRADING_API_TOKEN}"
+  ALLOWED_HOSTS: "trading-api,localhost,127.0.0.1"
+  NEWS_AI_ANALYSIS: "true"
+  NEWS_AI_MODEL: "google/gemini-3.1-flash-lite-preview"
+  OPENROUTER_API_KEY: "${OPENROUTER_API_KEY}"
+  FINANCIAL_DATASETS_API_KEY: "${FINANCIAL_DATASETS_API_KEY}"
+  DESK_SCRIPTS_ROOT: ${REPO_ROOT}/scripts
+  APEWISDOM_FETCHER: "${REPO_ROOT}/scripts/social/fetch-apewisdom.sh"
+  FUNDAMENTALS_FETCHER: "${REPO_ROOT}/scripts/social/fetch-fundamentals.sh"
+  DESK_SHARED_ROOT: *desk_shared_root
+  DESK_PRIVATE_ROOT: *desk_private_root
+
+# ── Infrastructure Services ───────────────────────────────────────────
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    mem_limit: 1g
+    environment:
+      POSTGRES_USER: trading
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_DB: "${POSTGRES_DB}"
+    networks: [claw-internal]
+    expose: ["5432"]
+    volumes:
+      - type: bind
+        source: *postgres_data_root
+        target: /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trading -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    mem_limit: 384m
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    networks: [claw-internal]
+    expose: ["6379"]
+    volumes:
+      - type: bind
+        source: *redis_data_root
+        target: /data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  trading-api:
+    <<: *rails_runtime
+    image: tiverton-house-trading-api:latest
+    command: ["./bin/rails", "server", "-b", "0.0.0.0", "-p", "4000"]
+    networks: [claw-internal]
+    ports: ["4000:4000"]
+    restart: unless-stopped
+    mem_limit: 768m
+    environment:
+      <<: *rails_env
+      MALLOC_ARENA_MAX: "2"
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:4000/up || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  sidekiq:
+    <<: *rails_runtime
+    build:
+      context: ./services/trading-api
+      dockerfile: Dockerfile.sidekiq
+    command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
+    networks: [claw-internal]
+    restart: unless-stopped
+    mem_limit: 768m
+    environment:
+      <<: *rails_env
+      MALLOC_ARENA_MAX: "2"
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      trading-api: { condition: service_started }
+
+  # ── Claws ─────────────────────────────────────────────────────────────
+
+  tiverton:
+    <<: *openclaw_service
+    mem_limit: 1536m
+    x-claw:
+      agent: *shared_agent
+      feeds: *risk_feeds
+      skills:
+        - ...
+        - ./policy/escalation.md
+      include:
+        - <<: *identity_include
+          file: ./agents/tiverton/IDENTITY.md
+        - <<: *coordinator_role_include
+        - <<: *risk_limits_include
+        - <<: *approval_workflow_include
+        - <<: *escalation_include
+      handles:
+        discord:
+          id: "${TIVERTON_DISCORD_ID}"
+          username: "tiverton"
+          guilds: *floor_infra_guild
+      invoke:
+        - schedule: "15 8 * * 1-5"
+          name: "Pre-market synthesis"
+          message: "Pre-market synthesis. Review shared news and reports, update the desk plan, and post only the actionable floor briefing."
+          to: trading-floor
+        - schedule: "15,45 7-18 * * 1-5"
+          name: "Audit export"
+          message: "Run `${REPO_ROOT}/scripts/audit/export-trade-audit.sh`. Report only on failure."
+      tools:
+        - ...
+        - service: trading-api
+          allow:
+            - approve_trade
+            - deny_trade
+            - cancel_trade
+            - get_pending_trades
+            - get_desk_risk_context
+            - check_alpaca_consistency
+            - run_alpaca_alignment
+            - run_news_poll
+    environment:
+      <<: *agent_env
+      TRADING_AGENT_ID: "tiverton"
+      TRADING_API_TOKEN: "${TIVERTON_TRADING_API_TOKEN}"
+      DISCORD_BOT_TOKEN: "${TIVERTON_BOT_TOKEN}"
+
+  weston:
+    <<: *funded_trader_service
+    x-claw:
+      <<: *trader_claw
+      models:
+        primary: xai/grok-4-1-fast-reasoning
+      feeds: *weston_feeds
+      include:
+        - <<: *identity_include
+          file: ./agents/weston/IDENTITY.md
+        - <<: *trader_role_include
+        - <<: *risk_limits_include
+        - <<: *approval_workflow_include
+      handles:
+        discord:
+          id: "${WESTON_DISCORD_ID}"
+          username: "weston"
+      invoke:
+        - schedule: "0 7 * * 1-5"
+          name: "Pre-market research"
+          message: "Pre-market momentum scan. Refresh watchlist and session notes. Share your top setups, what catalysts you're watching today, and any new names on your radar."
+          to: trading-floor
+        - schedule: "35-55/5 9 * * 1-5"
+          name: "Opening range scan"
+          message: "Opening range scan. Check the first 25 minutes of trading. Share what's moving, what triggered, and what you're watching into midday. Update session notes."
+          to: trading-floor
+        - schedule: "0,30 10-15 * * 1-5"
+          name: "Market heartbeat"
+          message: "Market heartbeat. Share your current read — momentum shifts, developing setups, names gaining relative strength, or what changed since open. Update session notes."
+          to: trading-floor
+        - schedule: "15 10,14 * * 1-5"
+          name: "Research review"
+          message: "Scan for new setups — unusual volume, catalyst acceleration, sector rotation, names you haven't looked at before. Update shared research files and watchlist for any name you develop a view on. Post anything interesting to the desk."
+          to: trading-floor
+        - schedule: "20 12 * * 1-5"
+          name: "Midday review"
+          message: "Midday review. Refresh stops and invalidation. Share the afternoon plan — what are you watching, what would trigger action, any new ideas developing?"
+          to: trading-floor
+        - schedule: "30 16 * * 1-5"
+          name: "End-of-day report"
+          message: "End-of-day review. Summarize the session — what worked, what didn't, new ideas for tomorrow. Update shared research files for any name you analyzed today. Roll forward watchlist and session notes."
+          to: trading-floor
+      tools:
+        - ...
+        - service: trading-api
+          allow:
+            - propose_trade
+            - confirm_trade
+            - cancel_trade
+            - pass_trade
+            - get_momentum_context
+    environment:
+      <<: *trader_env
+      TRADING_AGENT_ID: "weston"
+      TRADING_API_TOKEN: "${WESTON_TRADING_API_TOKEN}"
+      DISCORD_BOT_TOKEN: "${WESTON_BOT_TOKEN}"
+
+  logan:
+    <<: *funded_trader_service
+    x-claw:
+      <<: *trader_claw
+      models:
+        primary: openrouter/google/gemini-3-flash-preview
+      feeds: *logan_feeds
+      include:
+        - <<: *identity_include
+          file: ./agents/logan/IDENTITY.md
+        - <<: *trader_role_include
+        - <<: *risk_limits_include
+        - <<: *approval_workflow_include
+      handles:
+        discord:
+          id: "${LOGAN_DISCORD_ID}"
+          username: "logan"
+      invoke:
+        - schedule: "45 7 * * 1-5"
+          name: "Pre-market value watch"
+          message: "Pre-market value scan. Refresh watchlist and session notes. Share mispriced setups you're developing, valuation work in progress, and names moving into your strike zone."
+          to: trading-floor
+        - schedule: "35-55/5 9 * * 1-5"
+          name: "Opening range scan"
+          message: "Opening range scan. Check the first 25 minutes. Share what moved into value range, any gap-downs worth investigating, and update session notes."
+          to: trading-floor
+        - schedule: "15 10-15 * * 1-5"
+          name: "Market heartbeat"
+          message: "Market heartbeat. Share your current view — thesis drift on holdings, new names entering value territory, sector dislocations worth investigating. Update session notes."
+          to: trading-floor
+        - schedule: "17 10,14 * * 1-5"
+          name: "Research review"
+          message: "Deep research pass. Look at balance sheets, dividend histories, capital allocation, spin-off candidates, or beaten-down quality names. Update shared research files and watchlist for names you build conviction on. Post your findings and developing theses."
+          to: trading-floor
+        - schedule: "45 12 * * 1-5"
+          name: "Midday review"
+          message: "Midday review. Refresh thesis drift notes. Share the afternoon plan — what's getting closer to actionable and what new angles you're exploring."
+          to: trading-floor
+        - schedule: "45 16 * * 1-5"
+          name: "End-of-day report"
+          message: "End-of-day review. Summarize conviction changes, new ideas developing, and what you want to research overnight. Update shared research files for names you worked on today. Roll forward watchlist and session notes."
+          to: trading-floor
+      tools:
+        - ...
+        - service: trading-api
+          allow:
+            - propose_trade
+            - confirm_trade
+            - cancel_trade
+            - pass_trade
+            - get_momentum_context
+    environment:
+      <<: *trader_env
+      TRADING_AGENT_ID: "logan"
+      TRADING_API_TOKEN: "${LOGAN_TRADING_API_TOKEN}"
+      DISCORD_BOT_TOKEN: "${LOGAN_BOT_TOKEN}"
+
+  gerrard:
+    <<: *funded_trader_service
+    x-claw:
+      <<: *trader_claw
+      models:
+        primary: openrouter/google/gemini-3-flash-preview
+      include:
+        - <<: *identity_include
+          file: ./agents/gerrard/IDENTITY.md
+        - <<: *trader_role_include
+        - <<: *risk_limits_include
+        - <<: *approval_workflow_include
+      handles:
+        discord:
+          id: "${GERRARD_DISCORD_ID}"
+          username: "gerrard"
+      invoke:
+        - schedule: "30 7 * * 1-5"
+          name: "Pre-market macro read"
+          message: "Morning macro assessment. Review overnight moves, rates, futures, FX, and the event calendar. Share your regime read and what it means for desk positioning today."
+          to: trading-floor
+        - schedule: "0 10-15 * * 1-5"
+          name: "Hourly macro pulse"
+          message: "Hourly macro pulse. Reassess rates, sector rotation, cross-asset moves, and calendar risk. Share only what changed, why it matters now, and any actionable macro positioning ideas."
+          to: trading-floor
+        - schedule: "30 16 * * 1-5"
+          name: "End-of-day macro summary"
+          message: "End-of-day macro summary. What changed today in the macro picture? Rate expectations, sector rotation, event risk ahead. Update shared research files for any name you tracked today. Roll forward your macro thesis and watchlist."
+          to: trading-floor
+        - schedule: "0 10 * * 0"
+          name: "Weekly macro outlook"
+          message: "Weekly macro outlook. Assess the regime, key events ahead, sector rotation trends, and longer-term positioning themes. Share your top macro trade ideas for the week."
+          to: trading-floor
+      tools:
+        - ...
+        - service: trading-api
+          allow:
+            - propose_trade
+            - confirm_trade
+            - cancel_trade
+            - pass_trade
+            - get_momentum_context
+    environment:
+      <<: *trader_env
+      TRADING_AGENT_ID: "gerrard"
+      TRADING_API_TOKEN: "${GERRARD_TRADING_API_TOKEN}"
+      DISCORD_BOT_TOKEN: "${GERRARD_BOT_TOKEN}"
+
+  danforth:
+    <<: *funded_trader_service
+    x-claw:
+      <<: *trader_claw
+      models:
+        primary: openrouter/google/gemini-3-flash-preview
+      include:
+        - <<: *identity_include
+          file: ./agents/danforth/IDENTITY.md
+        - <<: *trader_role_include
+        - <<: *risk_limits_include
+        - <<: *approval_workflow_include
+      handles:
+        discord:
+          id: "${DANFORTH_DISCORD_ID}"
+          username: "danforth"
+      invoke:
+        - schedule: "35 7 * * 1-5"
+          name: "Pre-market situations scan"
+          message: "Pre-market scan. Check the corporate action calendar, earnings dates, spin-off announcements, and distressed names for any new or developing special situations. Share what's actionable today and flag anything that affects a position or watchlist name."
+          to: trading-floor
+        - schedule: "0 10,13 * * 1-5"
+          name: "Situation check-in"
+          message: "Situation check-in. Reassess active theses and watchlist names. Has anything changed in the catalyst timeline, the credit picture, or the market's understanding of the situation? Share only if something materially changed."
+          to: trading-floor
+        - schedule: "35 16 * * 1-5"
+          name: "End-of-day thesis update"
+          message: "End-of-day update. Summarize any situation developments, update research files for names you tracked today, and roll forward your thesis and catalyst timeline. Flag anything that needs monitoring before open tomorrow."
+          to: trading-floor
+        - schedule: "0 10 * * 0"
+          name: "Weekly situations pipeline"
+          message: "Weekly pipeline review. Assess the active thesis queue, identify any new special situations forming, and share the top 1-2 setups with the best risk/reward for the week ahead."
+          to: trading-floor
+      tools:
+        - ...
+        - service: trading-api
+          allow:
+            - propose_trade
+            - confirm_trade
+            - cancel_trade
+            - pass_trade
+            - get_momentum_context
+    environment:
+      <<: *trader_env
+      TRADING_AGENT_ID: "danforth"
+      TRADING_API_TOKEN: "${DANFORTH_TRADING_API_TOKEN}"
+      DISCORD_BOT_TOKEN: "${DANFORTH_BOT_TOKEN}"
+
+  dundas:
+    image: tiverton-house-dundas-openclaw:latest
+    build:
+      context: .
+      dockerfile: ./agents/dundas/OpenClawfile
+    mem_limit: 1536m
+    healthcheck: *openclaw_healthcheck
+    x-claw:
+      agent: *shared_agent
+      feeds: *base_trader_feeds
+      skills:
+        - ./docs/skills/desk-scripts.md
+        - ./policy/risk-limits.md
+      include:
+        - <<: *identity_include
+          file: ./agents/dundas/IDENTITY.md
+      handles:
+        discord:
+          id: "${DUNDAS_DISCORD_ID}"
+          username: "dundas"
+      invoke:
+        - schedule: "5 8-16 * * 1-5"
+          name: "News check-in"
+          message: "Use the `trading-api.get_news_latest` tool to check the latest news summary. Route HIGH-impact catalysts to affected traders by mention. Route MEDIUM-impact items that touch held positions or watchlist names. Post desk-wide macro news without mentions. If nothing is newsworthy, produce zero text output."
+          to: trading-floor
+      tools: *read_only_context_tools
+    environment:
+      <<: *agent_env
+      TRADING_AGENT_ID: "dundas"
+      TRADING_API_TOKEN: "${DUNDAS_TRADING_API_TOKEN}"
+      DISCORD_BOT_TOKEN: "${DUNDAS_BOT_TOKEN}"
+      NODE_OPTIONS: "--max-old-space-size=1024"
+
+  allen:
+    image: tiverton-house-allen-openclaw:latest
+    build:
+      context: .
+      dockerfile: ./agents/allen/OpenClawfile
+    mem_limit: 1536m
+    healthcheck: *openclaw_healthcheck
+    x-claw:
+      agent: *shared_agent
+      feeds: *base_trader_feeds
+      skills:
+        - ./docs/skills/desk-scripts.md
+        - ./policy/risk-limits.md
+      include:
+        - <<: *identity_include
+          file: ./agents/allen/IDENTITY.md
+        - id: analyst_role
+          file: ./agents/_shared/analyst-base.md
+          mode: guide
+      handles:
+        discord:
+          id: "${ALLEN_DISCORD_ID}"
+          username: "allen"
+      invoke:
+        - schedule: "0 7 * * 1-5"
+          name: "Morning research scan"
+          message: "Morning research scan. Review overnight news against your knowledge graph. Check held positions for thesis drift using research-positions-xref.sh. Scan for new investigation leads. Share findings or produce zero text."
+          to: trading-floor
+        - schedule: "0 10 * * 1-5"
+          name: "Deep investigation session"
+          message: "Deep investigation session. Work your active investigations — map ecosystem actors, profile companies and executives, update the research graph. Use Perplexity and web search for deep research. Post milestone findings to the floor."
+          to: trading-floor
+        - schedule: "0 13 * * 1-5"
+          name: "Portfolio review"
+          message: "Portfolio review. Cross-reference your research graph against current positions. Flag profit-taking opportunities, stop adjustments, or emerging risks to the holding trader. Pitch any high-conviction names that are ready."
+          to: trading-floor
+        - schedule: "30 15 * * 1-5"
+          name: "End-of-day research notes"
+          message: "End-of-day. Update investigation status and entity staleness in the research graph. Log work-in-progress. Share a summary if the desk needs visibility, otherwise produce zero text."
+          to: trading-floor
+        - schedule: "0 10 * * 0"
+          name: "Weekly research report"
+          message: "Weekly research report. Cover: (1) Portfolio health — thesis status on every held position, recommended actions. (2) Active investigations — progress, key findings, where the asymmetry sits. (3) New pitches — fully formed recommendations with ecosystem context. (4) Watchlist evolution — names entering or leaving your radar."
+          to: trading-floor
+      tools: *read_only_context_tools
+    environment:
+      <<: *agent_env
+      TRADING_AGENT_ID: "allen"
+      TRADING_API_TOKEN: "${ALLEN_TRADING_API_TOKEN}"
+      DISCORD_BOT_TOKEN: "${ALLEN_BOT_TOKEN}"
+      NODE_OPTIONS: "--max-old-space-size=1024"
+
+  sentinel:
+    <<: *trader_openclaw_service
+    mem_limit: 1536m
+    x-claw:
+      agent: *shared_agent
+      include:
+        - <<: *identity_include
+          file: ./agents/sentinel/IDENTITY.md
+      feeds: *sentinel_feeds
+      surfaces:
+        - "service://claw-api"
+        - *discord_floor_surface
+      skills: []
+      handles:
+        discord:
+          id: "${SENTINEL_DISCORD_ID}"
+          username: "sentinel"
+          guilds: *floor_infra_guild
+      invoke:
+        - schedule: "0 7-18 * * 1-5"
+          name: "Fleet review"
+          message: "Review fleet alerts. Check trading agent health, feed freshness, and cost. Report anomalies to #infra."
+        - schedule: "0 */4 * * 0,6"
+          name: "Fleet review (off-hours)"
+          message: "Off-hours fleet check. Verify core infrastructure health (postgres, redis, trading-api). Report only anomalies to #infra."
+      tools: []
+    environment:
+      <<: *agent_env
+      TRADING_API_TOKEN: "${TRADING_API_INTERNAL_TOKEN}"
+      DISCORD_BOT_TOKEN: "${SENTINEL_DISCORD_BOT_TOKEN}"
+      DISCORD_HOME_CHANNEL: "${DISCORD_INFRA_CHANNEL}"
+      DISCORD_HOME_CHANNEL_NAME: "infra"
+      NODE_OPTIONS: "--max-old-space-size=1024"

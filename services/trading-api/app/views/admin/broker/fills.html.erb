@@ -1,0 +1,53 @@
+<% content_for :title, "Broker Fills" %>
+
+<div class="admin-header">
+  <div class="breadcrumb">
+    <%= link_to "ADMIN", admin_root_path %>
+    <span class="breadcrumb-separator">/</span>
+    <span>BROKER</span>
+    <span class="breadcrumb-separator">/</span>
+    <span>FILLS</span>
+  </div>
+  <h1>Broker Fills</h1>
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Trade ID</th>
+        <th>Order ID</th>
+        <th>Ticker</th>
+        <th>Side</th>
+        <th>Quantity</th>
+        <th>Fill Price</th>
+        <th>Fill Value</th>
+        <th>Filled At</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @fills.each do |fill| %>
+        <tr>
+          <td class="mono"><%= fill.id %></td>
+          <td class="mono"><%= link_to fill.trade_id, admin_trade_path(fill.trade_id) if fill.trade_id %></td>
+          <td class="mono text-secondary"><%= fill.broker_order_id %></td>
+          <td class="mono"><strong><%= fill.ticker %></strong></td>
+          <td>
+            <span class="badge <%= fill.side == 'buy' ? 'badge-success' : 'badge-danger' %>">
+              <%= fill.side.upcase %>
+            </span>
+          </td>
+          <td class="mono"><%= number_with_delimiter(fill.qty) %></td>
+          <td class="mono">$<%= number_with_precision(fill.price, precision: 2) %></td>
+          <td class="mono">$<%= number_with_delimiter(fill.value.round(2)) %></td>
+          <td class="mono text-secondary"><%= fill.executed_at.strftime("%m/%d %H:%M:%S") if fill.executed_at %></td>
+          <td class="mono text-secondary"><%= fill.created_at.strftime("%m/%d %H:%M:%S") %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<%= paginate @fills if defined?(paginate) %>

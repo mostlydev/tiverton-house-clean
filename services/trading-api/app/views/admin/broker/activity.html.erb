@@ -1,0 +1,51 @@
+<% content_for :title, "Broker Activity" %>
+
+<div class="admin-header">
+  <div class="breadcrumb">
+    <%= link_to "ADMIN", admin_root_path %>
+    <span class="breadcrumb-separator">/</span>
+    <span>BROKER</span>
+    <span class="breadcrumb-separator">/</span>
+    <span>ACTIVITY</span>
+  </div>
+  <h1>Broker Account Activity</h1>
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Activity Type</th>
+        <th>Ticker</th>
+        <th>Quantity</th>
+        <th>Amount</th>
+        <th>Activity Date</th>
+        <th>Metadata</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @activities.each do |activity| %>
+        <tr>
+          <td class="mono"><%= activity.id %></td>
+          <td>
+            <span class="badge badge-info"><%= activity.activity_type %></span>
+          </td>
+          <td class="mono"><%= activity.ticker || '-' %></td>
+          <td class="mono"><%= activity.qty ? number_with_delimiter(activity.qty) : '-' %></td>
+          <td class="mono" style="color: <%= activity.net_amount && activity.net_amount >= 0 ? 'var(--accent-green)' : 'var(--accent-red)' %>">
+            <%= activity.net_amount ? "#{activity.net_amount >= 0 ? '+' : ''}$#{number_with_delimiter(activity.net_amount.round(2))}" : '-' %>
+          </td>
+          <td class="mono text-secondary"><%= activity.activity_date.strftime("%Y-%m-%d") if activity.activity_date %></td>
+          <td class="mono text-muted" style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">
+            <%= activity.metadata.to_json if activity.metadata.present? %>
+          </td>
+          <td class="mono text-secondary"><%= activity.created_at.strftime("%m/%d %H:%M") %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<%= paginate @activities if defined?(paginate) %>

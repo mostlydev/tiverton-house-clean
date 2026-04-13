@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Architecture &middot; Tiverton House</title>
+
+    <!-- SEO Meta -->
+    <meta name="description" content="Complete technical documentation for the Tiverton House multi-agent AI trading system. Architecture, trade protocols, risk management, API reference, and operational workflows.">
+    <meta name="keywords" content="AI trading system, multi-agent architecture, autonomous trading, algorithmic trading documentation, Tiverton House">
+    <meta name="author" content="Lord Tiverton">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://<public-site-hostname>/docs/system.html">
+    <meta property="og:title" content="System Architecture &middot; Tiverton House">
+    <meta property="og:description" content="Complete technical documentation for the Tiverton House multi-agent AI trading system. Architecture, trade protocols, and operational workflows.">
+    <meta property="og:image" content="https://<public-site-hostname>/assets/og-image-docs.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://<public-site-hostname>/docs/system.html">
+    <meta name="twitter:title" content="System Architecture &middot; Tiverton House">
+    <meta name="twitter:description" content="Complete technical documentation for the Tiverton House multi-agent AI trading system. Architecture, trade protocols, and operational workflows.">
+    <meta name="twitter:image" content="https://<public-site-hostname>/assets/og-image-docs.png">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/assets/tiverton.png">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Source+Serif+4:wght@400;500;600;700&display=swap');
+
+        :root {
+            --bg-primary: #1a1612;
+            --bg-secondary: #231e19;
+            --bg-card: #2a241e;
+            --border-color: #3d352b;
+            --border-gold: #8b7355;
+            --text-primary: #f4e8d9;
+            --text-secondary: #c4b49a;
+            --text-muted: #8a7a66;
+            --accent-gold: #d4af37;
+            --accent-green: #5d8a4a;
+            --accent-red: #a04040;
+            --accent-cream: #f5f0e6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Source Serif 4', 'Georgia', serif;
+            background-color: var(--bg-primary);
+            background-image:
+                radial-gradient(ellipse at top, rgba(201, 162, 39, 0.03) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom, rgba(114, 47, 55, 0.05) 0%, transparent 50%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+
+        .container { max-width: 1400px; margin: 0 auto; }
+
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-gold);
+            padding: 1rem 2rem;
+            margin: -2rem -2rem 2rem -2rem;
+        }
+
+        nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+
+        nav a:hover {
+            color: var(--accent-gold);
+            border-color: var(--accent-gold);
+        }
+
+        header {
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--border-gold);
+        }
+
+        h1 {
+            font-family: 'Libre Baskerville', 'Georgia', serif;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--accent-cream);
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            font-style: italic;
+        }
+
+        h2 {
+            font-family: 'Libre Baskerville', 'Georgia', serif;
+            font-size: 1.8rem;
+            margin: 2rem 0 1rem;
+            color: var(--accent-gold);
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h3 { font-size: 1.4rem; margin: 1.5rem 0 1rem; color: var(--text-primary); font-weight: 600; }
+        h4 { font-size: 1.1rem; margin: 1rem 0 0.5rem; color: var(--accent-gold); }
+        p { margin-bottom: 1rem; color: var(--text-secondary); }
+
+        .section {
+            background: var(--bg-card);
+            padding: 2rem;
+            margin: 2rem 0;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: 6px;
+            border-left: 4px solid var(--accent-gold);
+        }
+
+        .card h4 { margin-top: 0; }
+
+        .card-green { border-left-color: var(--accent-green); }
+        .card-red { border-left-color: var(--accent-red); }
+
+        code {
+            background: var(--bg-secondary);
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+            color: var(--accent-green);
+        }
+
+        pre {
+            background: var(--bg-secondary);
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            border-left: 3px solid var(--border-gold);
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: var(--text-secondary);
+        }
+
+        .mermaid {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            background: var(--bg-secondary);
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--bg-primary);
+            color: var(--accent-gold);
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: rgba(212, 175, 55, 0.05);
+        }
+
+        ul, ol {
+            margin: 1rem 0 1rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        li { margin-bottom: 0.5rem; }
+
+        a {
+            color: var(--accent-gold);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cream); }
+
+        .table-wrapper {
+            overflow-x: auto;
+            margin: 1.5rem 0;
+        }
+
+        .toc {
+            background: linear-gradient(135deg, rgba(201, 162, 39, 0.05), rgba(114, 47, 55, 0.05));
+            border-left: 4px solid var(--accent-gold);
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        .toc h3 { margin-top: 0; }
+        .toc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 0;
+        }
+        .toc a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: block;
+            padding: 0.4rem 0;
+            transition: color 0.2s;
+            font-size: 0.95rem;
+        }
+        .toc a:hover { color: var(--accent-gold); }
+
+        .warning {
+            background: rgba(212, 175, 55, 0.1);
+            border-left: 4px solid var(--accent-gold);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+
+        .success {
+            background: rgba(93, 138, 74, 0.1);
+            border-left: 4px solid var(--accent-green);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+
+        .danger {
+            background: rgba(160, 64, 64, 0.1);
+            border-left: 4px solid var(--accent-red);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 600;
+            font-family: 'Consolas', monospace;
+        }
+        .badge-gold { background: rgba(212, 175, 55, 0.2); color: var(--accent-gold); }
+        .badge-green { background: rgba(93, 138, 74, 0.2); color: var(--accent-green); }
+        .badge-red { background: rgba(160, 64, 64, 0.2); color: var(--accent-red); }
+        .badge-muted { background: rgba(138, 122, 102, 0.2); color: var(--text-muted); }
+
+        @media (max-width: 768px) {
+            body { padding: 1rem; }
+            h1 { font-size: 2rem; }
+            .section { padding: 1rem; }
+            .mermaid { padding: 1rem; }
+            .grid, .grid-3 { grid-template-columns: 1fr; }
+            .toc-grid { grid-template-columns: 1fr; }
+            nav { margin: -1rem -1rem 1rem -1rem; padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/">&#8592; Back to Dashboard</a>
+    </nav>
+    <div class="container">
+        <header>
+            <h1>System Architecture</h1>
+            <p class="subtitle">Tiverton House Trading System &middot; Complete Technical Documentation</p>
+        </header>
+
+        <!-- TABLE OF CONTENTS -->
+        <div class="toc section">
+            <h3>Table of Contents</h3>
+            <div class="toc-grid">
+                <div>
+                    <a href="#overview">1. System Overview</a>
+                    <a href="#philosophy">2. Philosophy &amp; Investment Beliefs</a>
+                    <a href="#architecture">3. Architecture</a>
+                    <a href="#agents">4. Agent Roles &amp; Responsibilities</a>
+                    <a href="#trade-flow">5. Trade Flow (Two-Phase Protocol)</a>
+                    <a href="#asset-classes">6. Asset Classes &amp; Market Hours</a>
+                    <a href="#research">7. Research Requirements</a>
+                    <a href="#execution">8. Execution Pipeline</a>
+                </div>
+                <div>
+                    <a href="#news">9. News Intelligence</a>
+                    <a href="#sentiment">10. Social Sentiment (ApeWisdom)</a>
+                    <a href="#heartbeats">11. Heartbeat &amp; Scheduling</a>
+                    <a href="#api">12. Rails Trading API</a>
+                    <a href="#database">13. Database Schema &amp; Ledger</a>
+                    <a href="#jobs">14. Background Jobs</a>
+                    <a href="#risk">15. Risk Management</a>
+                    <a href="#communication">16. Communication &amp; Discord</a>
+                    <a href="#performance">17. Performance Tracking</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 1. SYSTEM OVERVIEW -->
+        <div id="overview" class="section">
+            <h2>1. System Overview</h2>
+            <p>The Tiverton Trading System is a <strong>multi-agent AI trading platform</strong> where independent AI traders compete and collaborate under centralized risk management. Six trading agents run autonomously on scheduled heartbeats, conducting research, monitoring markets, and proposing trades through a structured two-phase approval workflow. A Rails 7 API serves as the system of record, with Alpaca as the broker and Discord as the communication layer.</p>
+
+            <div class="grid">
+                <div class="card">
+                    <h4>Strategy Isolation</h4>
+                    <p>Each agent maintains an independent investment thesis. Momentum traders don't influence value investors. Strategy diversity creates genuine checks and balances.</p>
+                </div>
+                <div class="card">
+                    <h4>Model Diversity</h4>
+                    <p>Claude Sonnet 4.5 for coordination (Tiverton). Kimi K2.5 for research-heavy traders. Grok 4.1 for speed-critical roles. Models matched to agent temperaments.</p>
+                </div>
+                <div class="card">
+                    <h4>Individual Accountability</h4>
+                    <p>Each trading agent has an isolated wallet ($25k seed, $1k for Boulton). Performance tracked individually with immutable ledger audit trails.</p>
+                </div>
+                <div class="card">
+                    <h4>Continuous Operation</h4>
+                    <p>Five equity traders scan every 15 minutes during market hours. Boulton runs every 5 minutes including extended hours. Crypto trades 24/7.</p>
+                </div>
+            </div>
+
+            <h3>Technology Stack</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Agent Runtime</strong></td><td>OpenClaw</td><td>Agent lifecycle, cron scheduling, gateway routing, health monitoring</td></tr>
+                        <tr><td><strong>Trading API</strong></td><td>Rails 7.2 + PostgreSQL 16</td><td>System of record: trades, positions, wallets, ledger, market data</td></tr>
+                        <tr><td><strong>Background Jobs</strong></td><td>Sidekiq + Redis 7</td><td>Trade execution, price updates, reconciliation, news polling</td></tr>
+                        <tr><td><strong>Dashboard</strong></td><td>Hotwire (Turbo + Stimulus)</td><td>Real-time portfolio dashboard at port 4000</td></tr>
+                        <tr><td><strong>Broker</strong></td><td>Alpaca Markets API</td><td>Order execution, market data, news feed, account management</td></tr>
+                        <tr><td><strong>Communication</strong></td><td>Discord</td><td>Trade proposals, approvals, news alerts via #trading-floor and #infra</td></tr>
+                        <tr><td><strong>AI Models</strong></td><td>Claude Sonnet 4.5, Kimi K2.5, Grok 4.1</td><td>Agent reasoning: coordination, research, speed-critical roles</td></tr>
+                        <tr><td><strong>Social Data</strong></td><td>ApeWisdom</td><td>Reddit/WSB mention counts for social sentiment signals</td></tr>
+                        <tr><td><strong>Process Mgmt</strong></td><td>systemd user units</td><td>Rails server, trading floor sync, persistent services</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Four-Tier Hierarchy</h3>
+            <ul>
+                <li><strong>Layer 1 &mdash; Boss (Wojtek):</strong> Ultimate decision authority. Sets investment beliefs, risk policy, agent allocation.</li>
+                <li><strong>Layer 2 &mdash; Tiverton (Claude Sonnet 4.5):</strong> Risk Officer + Coordinator. Advisory feedback, compliance checks, infrastructure management.</li>
+                <li><strong>Layer 3 &mdash; Trading Agents:</strong> Westin, Logan, Gerrard, Dundas ($25k each), Boulton ($1k) &mdash; each with independent wallets and strategies.</li>
+                <li><strong>Layer 4 &mdash; Rails Trading API + Alpaca Broker:</strong> Execution layer. Auto-executes approved trades via Sidekiq.</li>
+            </ul>
+        </div>
+
+        <!-- 2. PHILOSOPHY -->
+        <div id="philosophy" class="section">
+            <h2>2. Philosophy &amp; Investment Beliefs</h2>
+
+            <h3>Investment Beliefs (Boss)</h3>
+            <div class="grid">
+                <div class="card">
+                    <h4>AI Is Not a Bubble</h4>
+                    <p>AI represents genuine economic transformation, not speculative mania. Don't short based on "bubble" logic alone.</p>
+                </div>
+                <div class="card">
+                    <h4>Dollar Weakness = Policy</h4>
+                    <p>Dollar strength/weakness driven by fiscal and monetary policy. Print money = dollar falls. This creates opportunities.</p>
+                </div>
+                <div class="card">
+                    <h4>Supply-Side Economics</h4>
+                    <p>Lower taxes and reduced regulation drive growth. Policy changes create sector rotation opportunities.</p>
+                </div>
+            </div>
+
+            <h3>Trading Philosophy</h3>
+            <div class="success">
+                <strong>You're here to make money, not manage risk.</strong> Risk management is a tool, not the goal.
+                <ul>
+                    <li>Better to be in early and wrong than late and right. You can cut losses &mdash; you can't recapture missed alpha.</li>
+                    <li>Conviction beats caution. When you see it, size it. Don't nibble.</li>
+                    <li>"Too late" is often too early. Momentum runs longer than fundamentals justify.</li>
+                    <li>Let winners run. Don't trim for profit alone &mdash; exit on thesis invalidation or concentration &gt;40%.</li>
+                </ul>
+            </div>
+
+            <h3>Operational Edge</h3>
+            <div class="success">
+                <strong>We process information faster than retail.</strong>
+                <p>News &rarr; Analysis &rarr; Trade proposal happens in under 60 seconds. Our edge:</p>
+                <ul>
+                    <li>Sub-minute reaction to breaking news</li>
+                    <li>Instant multi-source synthesis (earnings + sentiment + technicals)</li>
+                    <li>Real-time pattern recognition across tickers/sectors</li>
+                    <li>Multiple strategies scanning simultaneously</li>
+                </ul>
+                <p><strong>When breaking news hits, move fast.</strong> Speed is alpha. Don't wait for "confirmation" &mdash; that's when retail arrives.</p>
+            </div>
+
+            <h3>Intelligence Standards</h3>
+            <div class="grid">
+                <div class="card card-green">
+                    <h4>Hard Intelligence</h4>
+                    <ul>
+                        <li>Physical deployments (fleet trackers, satellite imagery)</li>
+                        <li>Supply data (EIA, rig counts, inventory levels)</li>
+                        <li>Corporate actions (SEC filings, confirmed contracts)</li>
+                        <li>Official economic releases (BLS, Census, Fed)</li>
+                        <li>Technical confirmation (price at key levels with volume)</li>
+                    </ul>
+                </div>
+                <div class="card card-red">
+                    <h4>Noise (Filter Out)</h4>
+                    <ul>
+                        <li>Diplomatic rhetoric ("considering", "exploring")</li>
+                        <li>Analyst upgrades/downgrades (lagging indicators)</li>
+                        <li>Generic market commentary</li>
+                        <li>Second-hand reporting ("sources say")</li>
+                        <li>Recycled information (check timestamps)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. ARCHITECTURE -->
+        <div id="architecture" class="section">
+            <h2>3. Architecture</h2>
+
+            <pre class="mermaid">
+graph TB
+    Boss["Boss (Wojtek)<br/>Ultimate Authority"]
+    Tiverton["Tiverton<br/>Claude Sonnet 4.5<br/>Risk Officer + Coordinator"]
+
+    Westin["Westin<br/>Kimi K2.5<br/>Momentum/Tech<br/>$25k wallet"]
+    Logan["Logan<br/>Kimi K2.5<br/>Value/Dividend<br/>$25k wallet"]
+    Gerrard["Gerrard<br/>Kimi K2.5<br/>Macro/Strategy<br/>$25k wallet"]
+    Dundas["Dundas<br/>Grok 4.1<br/>News/Events<br/>$25k wallet"]
+    Boulton["Boulton<br/>Grok 4.1<br/>Pump/Sentiment<br/>$1k wallet"]
+
+    Allen["Allen<br/>Kimi K2.5<br/>Systems Monitor"]
+
+    Rails["Rails Trading API<br/>PostgreSQL + Sidekiq<br/>Port 4000"]
+    Alpaca["Alpaca Broker<br/>Execution + Data"]
+    Discord["Discord<br/>#trading-floor<br/>#infra"]
+
+    Boss --> Tiverton
+    Tiverton --> Westin
+    Tiverton --> Logan
+    Tiverton --> Gerrard
+    Tiverton --> Dundas
+    Tiverton --> Boulton
+    Tiverton -.coordinates.-> Allen
+
+    Westin --> Rails
+    Logan --> Rails
+    Gerrard --> Rails
+    Dundas --> Rails
+    Boulton --> Rails
+    Tiverton --> Rails
+
+    Rails --> Alpaca
+    Rails --> Discord
+
+    style Boss fill:#722f37,color:#f4e8d9
+    style Tiverton fill:#c9a227,color:#1a1612
+    style Westin fill:#2a241e,color:#f4e8d9
+    style Logan fill:#2a241e,color:#f4e8d9
+    style Gerrard fill:#2a241e,color:#f4e8d9
+    style Dundas fill:#2a241e,color:#f4e8d9
+    style Boulton fill:#3d1a1a,color:#f4e8d9
+    style Allen fill:#231e19,color:#c4b49a
+    style Rails fill:#1a2a1a,color:#f4e8d9
+    style Alpaca fill:#231e19,color:#c4b49a
+    style Discord fill:#231e19,color:#c4b49a
+            </pre>
+
+            <h3>System Layers</h3>
+            <pre class="mermaid">
+graph TB
+    subgraph Agents["Agent Layer (OpenClaw)"]
+        direction LR
+        A1["Trading Agents"]
+        A2["Tiverton"]
+        A3["Allen"]
+    end
+
+    subgraph API["API Layer (Rails 7 + Sidekiq)"]
+        direction LR
+        B1["Trade State Machine"]
+        B2["Ledger"]
+        B3["Market Data"]
+    end
+
+    subgraph External["External Services"]
+        direction LR
+        C1["Alpaca Broker"]
+        C2["Discord"]
+        C3["ApeWisdom"]
+    end
+
+    subgraph Data["Data Layer"]
+        direction LR
+        D1["PostgreSQL"]
+        D2["Redis"]
+    end
+
+    Agents --> API
+    API --> External
+    API --> Data
+    External -.-> Data
+
+    style Agents fill:#2a241e,color:#f4e8d9
+    style API fill:#1a2a1a,color:#f4e8d9
+    style External fill:#231e19,color:#c4b49a
+    style Data fill:#1a1612,color:#c4b49a
+            </pre>
+        </div>
+
+        <!-- 4. AGENT ROLES -->
+        <div id="agents" class="section">
+            <h2>4. Agent Roles &amp; Responsibilities</h2>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Agent</th>
+                            <th>Model</th>
+                            <th>Strategy</th>
+                            <th>Wallet</th>
+                            <th>Heartbeat</th>
+                            <th>Key Duties</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Tiverton</strong></td>
+                            <td>Claude Sonnet 4.5</td>
+                            <td>Coordinator</td>
+                            <td>&mdash;</td>
+                            <td>&mdash;</td>
+                            <td>Advisory feedback, compliance approval, infrastructure, fleet coordination</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Westin</strong></td>
+                            <td>Kimi K2.5</td>
+                            <td>Momentum/Tech</td>
+                            <td>$25,000</td>
+                            <td>15 min</td>
+                            <td>Technical analysis, breakouts, IPO research (7:00 AM pre-market)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Logan</strong></td>
+                            <td>Kimi K2.5</td>
+                            <td>Value/Dividend</td>
+                            <td>$25,000</td>
+                            <td>15 min</td>
+                            <td>Fundamental analysis, 10-Ks, balance sheets, value scan (7:45 AM)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Gerrard</strong></td>
+                            <td>Kimi K2.5</td>
+                            <td>Macro/Strategy</td>
+                            <td>$25,000</td>
+                            <td>15 min</td>
+                            <td>Fed policy, sector rotation, macro brief (7:20 AM), CPI/FOMC scheduling</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Dundas</strong></td>
+                            <td>Grok 4.1</td>
+                            <td>Event/News</td>
+                            <td>$25,000</td>
+                            <td>10 min</td>
+                            <td>News monitoring, event trading, catalyst identification, alert routing</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Boulton</strong></td>
+                            <td>Grok 4.1</td>
+                            <td>Pump/Sentiment</td>
+                            <td>$1,000</td>
+                            <td>5 min</td>
+                            <td>Social sentiment spikes, WSB momentum, aggressive entries, tight stops (3-5%)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Allen</strong></td>
+                            <td>Kimi K2.5</td>
+                            <td>Systems Monitor</td>
+                            <td>&mdash;</td>
+                            <td>30 min</td>
+                            <td>Infrastructure health checks, system monitoring (7 AM&ndash;7 PM ET)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Detailed Roles</h3>
+
+            <h4>Tiverton (Risk Officer + Coordinator)</h4>
+            <ul>
+                <li><strong>Two-phase trade review:</strong> Advisory feedback (peer input, cannot deny) &rarr; Compliance check (mechanical limits, can deny)</li>
+                <li>Approves trades via <code>db-trade-approve.sh</code>; Rails/Sidekiq auto-executes</li>
+                <li>Coordinates infrastructure, config changes, source discovery</li>
+                <li><strong>Only agent authorized for infrastructure changes</strong></li>
+                <li>Stop loss orders are auto-approved (risk management discipline)</li>
+            </ul>
+
+            <h4>Westin (Momentum/Tech)</h4>
+            <ul>
+                <li>Technical analysis, breakouts, earnings setups, IPO research</li>
+                <li><strong>Pre-market duty (7:00 AM):</strong> Daily IPO scan &mdash; company overview, deal size, underwriters, comparables, first-day pop potential</li>
+                <li>Fast reads, tight entries, defined stops</li>
+            </ul>
+
+            <h4>Logan (Value/Dividend)</h4>
+            <ul>
+                <li>Fundamental analysis, 10-Ks, balance sheets, DCF models</li>
+                <li>Blue chips, dividend plays, quality at mispricing</li>
+                <li>Skeptical of hype, downside protection focus</li>
+                <li><strong>Pre-market duty (7:45 AM):</strong> Value scan</li>
+            </ul>
+
+            <h4>Gerrard (Macro/Strategy)</h4>
+            <ul>
+                <li>Fed policy, economic indicators, sector rotation, market regimes</li>
+                <li><strong>Pre-market duty (7:20 AM):</strong> Macro brief (Fed, economic calendar, overnight moves)</li>
+                <li><strong>Event scheduling:</strong> On major release days (CPI, FOMC, jobs), schedules Dundas event scans</li>
+            </ul>
+
+            <h4>Dundas (Event/News)</h4>
+            <ul>
+                <li>Monitors news every 10 minutes during market hours (fastest news agent)</li>
+                <li>Routes alerts via #trading-floor, event-driven trading (earnings surprises, news catalysts)</li>
+                <li>Alert categories: GEOPOLITICAL | FED/MACRO | EARNINGS | SECTOR | BREAKING | SENTIMENT</li>
+                <li><strong>Special duty:</strong> Jobs Report scan (1st&ndash;7th of month at 8:31 AM)</li>
+            </ul>
+
+            <h4>Boulton (Pump/Sentiment) <span class="badge badge-red">HIGH RISK</span></h4>
+            <ul>
+                <li>$1,000 risk capital (expendable wallet &mdash; acknowledged high-risk allocation)</li>
+                <li>Aggressive pump chaser: social sentiment spikes, WSB momentum, unusual volume</li>
+                <li>Fastest heartbeat (5 minutes), including extended hours and weekends for crypto</li>
+                <li>Tight stops (3-5%), aggressive targets (15-25%)</li>
+                <li>Lighter advisory touch from Tiverton (mechanical enforcement only)</li>
+            </ul>
+        </div>
+
+        <!-- 5. TRADE FLOW -->
+        <div id="trade-flow" class="section">
+            <h2>5. Trade Flow (Two-Phase Protocol)</h2>
+
+            <p>All trades go through a <strong>two-phase workflow</strong>: advisory dialogue (peer feedback) followed by compliance check (mechanical limits). This separates thesis discussion from rule enforcement.</p>
+
+            <pre class="mermaid">
+sequenceDiagram
+    participant Agent
+    participant Discord as #trading-floor
+    participant Tiverton
+    participant API as Rails API
+    participant Sidekiq
+    participant Alpaca
+
+    Agent->>API: db-trade-propose.sh (PROPOSED)
+    Agent->>Discord: TRADE PROPOSAL + @Tiverton
+    Tiverton->>Discord: Advisory feedback
+    Note over Tiverton,Discord: Peer input - "That's my take, your call"
+
+    alt Agent proceeds
+        Agent->>API: db-trade-confirm.sh
+        Agent->>Discord: CONFIRM trade-id
+        Note over Agent: Agent is DONE - resumes work
+        Tiverton->>API: db-trade-approve.sh (APPROVED)
+        API->>Sidekiq: TradeExecutionJob (auto-enqueued)
+        Sidekiq->>Alpaca: Submit broker order
+        Alpaca-->>API: Fill confirmation
+        API->>Discord: [FILLED] notification
+    else Agent passes
+        Agent->>Discord: PASS trade-id
+        API->>API: Mark PASSED
+    end
+            </pre>
+
+            <h3>Phase 1: Advisory (Peer Feedback)</h3>
+            <ol>
+                <li>Agent runs <code>db-trade-propose.sh</code> &rarr; creates <code>PROPOSED</code> record</li>
+                <li>Agent posts TRADE PROPOSAL in #trading-floor, mentions Tiverton</li>
+                <li>Tiverton gives advisory feedback: questions, concerns, perspective</li>
+                <li>Tiverton ends with "That's my take &mdash; your call"</li>
+            </ol>
+
+            <div class="warning">
+                <strong>Advisory cannot deny.</strong> Tiverton's feedback is peer input. The agent decides whether to proceed. Tiverton cannot deny based on thesis quality, timing concerns, FOMO assessment, or market conditions.
+            </div>
+
+            <h3>Phase 2: Compliance &amp; Auto-Execution</h3>
+            <ol>
+                <li>Agent runs <code>db-trade-confirm.sh</code> + posts CONFIRM in #trading-floor</li>
+                <li>Tiverton runs compliance check (mechanical limits only)</li>
+                <li>If compliant: Tiverton runs <code>db-trade-approve.sh</code> &rarr; Rails auto-enqueues <code>TradeExecutionJob</code></li>
+                <li>Sidekiq executes via Alpaca within seconds</li>
+                <li>Results posted to #trading-floor automatically</li>
+            </ol>
+
+            <div class="warning">
+                <strong>The script is the action.</strong> Posting "CONFIRM" in Discord without running <code>db-trade-confirm.sh</code> does nothing. The trade stays PROPOSED and auto-cancels after 15 minutes.
+            </div>
+
+            <h3>Trade State Machine</h3>
+            <pre><code>PROPOSED ──┬── APPROVED ──── EXECUTING ──── FILLED (terminal)
+           │        │        ├──── PARTIALLY_FILLED ──── FILLED
+           │        │        └──── FAILED (terminal)
+           │        └── QUEUED ──── APPROVED (on market open) ──── EXECUTING
+           ├── DENIED (terminal)
+           ├── PASSED (terminal)
+           └── CANCELLED (terminal)</code></pre>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>State</th><th>Description</th><th>Transitions</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="badge badge-gold">PROPOSED</span></td><td>Agent submitted proposal, advisory dialogue in progress</td><td>APPROVED, DENIED, PASSED, CANCELLED</td></tr>
+                        <tr><td><span class="badge badge-green">APPROVED</span></td><td>Tiverton approved, auto-execution enqueued</td><td>EXECUTING, QUEUED, CANCELLED</td></tr>
+                        <tr><td><span class="badge badge-muted">QUEUED</span></td><td>Waiting for market open (queue_until_open policy)</td><td>APPROVED (release on open)</td></tr>
+                        <tr><td><span class="badge badge-gold">EXECUTING</span></td><td>Broker order submitted, awaiting fill</td><td>FILLED, PARTIALLY_FILLED, FAILED, CANCELLED</td></tr>
+                        <tr><td><span class="badge badge-gold">PARTIALLY_FILLED</span></td><td>Some shares filled, awaiting remainder</td><td>FILLED, CANCELLED</td></tr>
+                        <tr><td><span class="badge badge-green">FILLED</span></td><td>Order fully executed by broker</td><td>Terminal</td></tr>
+                        <tr><td><span class="badge badge-red">DENIED</span></td><td>Compliance check failed (hard limit violation)</td><td>Terminal</td></tr>
+                        <tr><td><span class="badge badge-muted">PASSED</span></td><td>Agent decided not to proceed</td><td>Terminal</td></tr>
+                        <tr><td><span class="badge badge-red">FAILED</span></td><td>Execution error (insufficient funds, broker error)</td><td>Terminal</td></tr>
+                        <tr><td><span class="badge badge-muted">CANCELLED</span></td><td>Cancelled by Boss or system intervention</td><td>Terminal</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Message Discipline</h3>
+            <ul>
+                <li>Total agent messages per trade: proposal (1) + confirm/pass (1) + optional post-fill (1) = <strong>3 max</strong></li>
+                <li>Total Tiverton messages per trade: advisory feedback (1) = <strong>1 max</strong>. Approval is automated.</li>
+                <li>Leviathan handles all status notifications ([CONFIRMED], [APPROVED], [FILLED], [FAILED])</li>
+                <li>Don't post "Checking..." or "Processing..." messages</li>
+            </ul>
+        </div>
+
+        <!-- 6. ASSET CLASSES -->
+        <div id="asset-classes" class="section">
+            <h2>6. Asset Classes &amp; Market Hours</h2>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>Asset Class</th><th>Flag</th><th>Trading Hours</th><th>Order Types</th><th>Notes</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>US Equities</strong></td>
+                            <td><code>us_equity</code> (default)</td>
+                            <td>Regular: 09:30&ndash;16:00 ET<br/>Extended: 04:00&ndash;20:00 ET</td>
+                            <td>MARKET, LIMIT, STOP, STOP_LIMIT, TRAILING_STOP</td>
+                            <td>Extended hours require LIMIT + limit_price</td>
+                        </tr>
+                        <tr>
+                            <td><strong>US Options</strong></td>
+                            <td><code>us_option</code></td>
+                            <td>Regular hours only: 09:30&ndash;16:00 ET</td>
+                            <td>MARKET, LIMIT</td>
+                            <td>Qty-only (no notional), no trailing stops, no extended hours</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Crypto</strong></td>
+                            <td><code>crypto</code></td>
+                            <td>24/7</td>
+                            <td>MARKET, LIMIT, STOP_LIMIT</td>
+                            <td>Tickers use <code>/</code> format (BTC/USD). No shorting.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Crypto Perps</strong></td>
+                            <td><code>crypto_perp</code></td>
+                            <td>24/7</td>
+                            <td>MARKET, LIMIT, STOP_LIMIT</td>
+                            <td>Must specify explicitly</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Execution Policies (Equities Only)</h3>
+            <ul>
+                <li><strong><code>allow_extended</code></strong> (default): Executes in pre/after-hours if LIMIT order with limit_price; otherwise queues to next open</li>
+                <li><strong><code>queue_until_open</code></strong>: Always queues to next regular market open</li>
+                <li><strong><code>immediate</code></strong>: Queues if market closed (avoids extended-hours execution)</li>
+            </ul>
+            <p>Crypto and crypto_perp ignore execution policy &mdash; they trade 24/7.</p>
+
+            <h3>Order Types</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>Type</th><th>Required Params</th><th>Use Case</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>MARKET</td><td>(none)</td><td>Immediate execution at best available price</td></tr>
+                        <tr><td>LIMIT</td><td><code>--limit-price</code></td><td>Execute at specified price or better</td></tr>
+                        <tr><td>STOP</td><td><code>--stop-price</code></td><td>Trigger market order when stop price hit</td></tr>
+                        <tr><td>STOP_LIMIT</td><td><code>--stop-price --limit-price</code></td><td>Trigger limit order when stop price hit</td></tr>
+                        <tr><td>TRAILING_STOP</td><td><code>--trail-pct</code> or <code>--trail-amt</code></td><td>Dynamic stop that follows price movement</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Required Thesis Tokens</h3>
+            <ul>
+                <li><code>SHORT_OK</code> &mdash; Required in thesis for SELL without existing position</li>
+                <li><code>NOTIONAL_OK</code> &mdash; Required for amount-based SELL (equities/options only)</li>
+                <li><code>SELL_ALL</code> &mdash; Close entire long position (auto-expands qty)</li>
+                <li><code>COVER_ALL</code> &mdash; Close entire short position (auto-expands qty)</li>
+            </ul>
+        </div>
+
+        <!-- 7. RESEARCH -->
+        <div id="research" class="section">
+            <h2>7. Research Requirements</h2>
+
+            <div class="warning">
+                <strong>Step Zero (MANDATORY):</strong> Before proposing any trade, agents must become subject matter experts on that company. If you can't defend the thesis in depth, do not propose.
+            </div>
+
+            <h3>Research Process</h3>
+            <ol>
+                <li><strong>Run fundamentals:</strong> <code><legacy-shared-root>/scripts/fundamentals.sh TICKER</code></li>
+                <li><strong>Read research file:</strong> <code><legacy-shared-root>/research/tickers/{TICKER}.md</code></li>
+                <li><strong>Fill gaps:</strong> Use template at <code>TEMPLATE.md</code>, research missing sections</li>
+                <li><strong>Build thesis:</strong> Bull case, bear case, your edge, invalidation criteria</li>
+            </ol>
+
+            <h3>Minimum Required Knowledge</h3>
+            <div class="grid">
+                <div class="card"><h4>Company Overview</h4><p>Basic info, market position, what makes them unique</p></div>
+                <div class="card"><h4>Products &amp; Services</h4><p>What they sell, revenue breakdown by segment</p></div>
+                <div class="card"><h4>Customers &amp; Market</h4><p>Who buys, TAM, go-to-market strategy</p></div>
+                <div class="card"><h4>Competitive Landscape</h4><p>Competitors, moats, threats</p></div>
+                <div class="card"><h4>Financial Deep Dive</h4><p>Revenue, profitability, valuation, balance sheet</p></div>
+                <div class="card"><h4>Management</h4><p>CEO background, board quality, incentives</p></div>
+                <div class="card"><h4>Industry Context</h4><p>Trends, regulation, macro factors</p></div>
+                <div class="card"><h4>Investment Thesis</h4><p>Bull/bear cases, edge, invalidation criteria</p></div>
+            </div>
+
+            <h3>Research Tools</h3>
+            <ul>
+                <li><code>web_search</code> &mdash; Primary tool (Perplexity Sonar, live web, synthesized, with citations)</li>
+                <li><code>fundamentals.sh TICKER</code> &mdash; P/E, P/S, PEG, EV/EBITDA, FCF yield, growth rates, margins, ratios</li>
+                <li><code>db-ticker-metrics-get.sh TICKER</code> &mdash; All stored metrics with labels</li>
+                <li><code>market-context.sh [agent]</code> &mdash; Positions, live prices, P&amp;L, wallet, market status</li>
+                <li>SEC filings (10-K, 10-Q, 8-K), earnings call transcripts, company IR websites</li>
+            </ul>
+
+            <div class="success">
+                <strong>Quality bar:</strong> If you can't explain it to Boss (smart but not an industry expert), you don't understand it well enough to trade it.
+            </div>
+        </div>
+
+        <!-- 8. EXECUTION PIPELINE -->
+        <div id="execution" class="section">
+            <h2>8. Execution Pipeline</h2>
+
+            <h3>Auto-Execution Flow</h3>
+            <p>When Tiverton approves a trade, Rails <strong>automatically enqueues execution</strong> via Sidekiq. There is no manual execution step.</p>
+            <ol>
+                <li><code>db-trade-approve.sh</code> transitions trade to APPROVED</li>
+                <li><code>after_commit</code> callback enqueues <code>TradeExecutionJob</code></li>
+                <li>Job calls <code>TradeExecutionService</code> which submits broker order to Alpaca</li>
+                <li>Creates <code>BrokerOrder</code> record with idempotency key (<code>client_order_id</code>)</li>
+                <li><code>OrderReconciliationJob</code> (every 1 min) matches broker fills to trades</li>
+                <li>Fills create <code>BrokerFill</code> records + ledger entries + position/wallet updates</li>
+                <li>Discord notification posted automatically</li>
+            </ol>
+
+            <h3>Broker Integration</h3>
+            <pre><code># Propose a trade (agent)
+db-trade-propose.sh westin AAPL BUY --amount 5000 --thesis "Earnings momentum"
+
+# Limit order
+db-trade-propose.sh westin AAPL BUY --order-type LIMIT --limit-price 182.50 --thesis "Gap fill"
+
+# Stop loss
+db-trade-propose.sh westin AAPL SELL --order-type STOP --stop-price 178.00 --thesis "Stop discipline"
+
+# Trailing stop
+db-trade-propose.sh dundas TSLA SELL --qty 25 --trail-pct 5 --thesis "Trailing stop"
+
+# Close entire position
+db-trade-propose.sh westin AAPL SELL --sell-all --thesis "SELL_ALL thesis invalidated"</code></pre>
+
+            <h3>Idempotency &amp; Safety</h3>
+            <ul>
+                <li><strong>Request deduplication:</strong> <code>request_id</code> + <code>source</code> + payload hash prevents duplicate proposals</li>
+                <li><strong>Client order IDs:</strong> Broker orders use unique <code>client_order_id</code> for idempotent submission</li>
+                <li><strong>In-flight protection:</strong> BUY rejected if APPROVED/EXECUTING trade exists for same agent+ticker</li>
+                <li><strong>Duplicate prevention:</strong> BUY proposals rejected if PROPOSED already exists for agent+ticker</li>
+                <li><strong>One-agent-per-ticker:</strong> BUY proposals rejected if another agent holds the ticker</li>
+            </ul>
+
+            <h3>Stale Trade Handling</h3>
+            <ul>
+                <li><strong>Stale Proposals (&gt;15 min):</strong> Auto-cancel via <code>StaleTradeCheckJob</code></li>
+                <li><strong>Stale Approvals (&gt;5 min):</strong> Alert for investigation</li>
+                <li><strong>Queued trades:</strong> <code>ReleaseQueuedTradesJob</code> releases on market open</li>
+            </ul>
+        </div>
+
+        <!-- 9. NEWS INTELLIGENCE -->
+        <div id="news" class="section">
+            <h2>9. News Intelligence</h2>
+
+            <pre class="mermaid">
+graph LR
+    API["Alpaca News API"]
+    Poll["NewsPollJob<br/>Every 5 min"]
+    DB["PostgreSQL<br/>news_articles"]
+    Files["File Storage<br/>news/latest.md"]
+    Dundas["Dundas<br/>Dispatcher"]
+    Floor["#trading-floor"]
+    Agents["Trading Agents"]
+
+    API --> Poll
+    Poll --> DB
+    Poll --> Files
+    DB --> Dundas
+    Dundas --> Floor
+    Floor --> Agents
+
+    style API fill:#2a241e,color:#f4e8d9
+    style Poll fill:#c9a227,color:#1a1612
+    style DB fill:#1a2a1a,color:#f4e8d9
+    style Files fill:#231e19,color:#c4b49a
+    style Dundas fill:#722f37,color:#f4e8d9
+    style Floor fill:#2a241e,color:#f4e8d9
+    style Agents fill:#2a241e,color:#f4e8d9
+            </pre>
+
+            <h3>Pipeline</h3>
+            <ol>
+                <li><strong>Polling:</strong> <code>NewsPollJob</code> fetches from Alpaca News API every 5 minutes</li>
+                <li><strong>Storage:</strong> Articles saved to PostgreSQL (<code>news_articles</code> + <code>news_symbols</code>) and file system</li>
+                <li><strong>Summaries:</strong> Rolling 60-minute summary at <code><legacy-shared-root>/news/latest.md</code></li>
+                <li><strong>Dispatch:</strong> New articles trigger notification to Dundas for triage</li>
+                <li><strong>Routing:</strong> Dundas routes relevant alerts to #trading-floor (HIGH impact + held catalysts only)</li>
+            </ol>
+
+            <h3>Agent Response Rules</h3>
+            <div class="warning">
+                <strong>Default: say nothing.</strong> Most news is not actionable. Only respond if ALL three conditions are met:
+                <ol>
+                    <li>Headline directly affects a held position, watchlist ticker, or macro thesis</li>
+                    <li>You have concrete action to take (propose trade, adjust stop, add to watchlist)</li>
+                    <li>Response would change someone's behavior &mdash; not just demonstrate you read it</li>
+                </ol>
+            </div>
+
+            <p>News is accessible via the API and written to <code><legacy-shared-root>/news/latest.md</code> for agent consumption.</p>
+        </div>
+
+        <!-- 10. SOCIAL SENTIMENT -->
+        <div id="sentiment" class="section">
+            <h2>10. Social Sentiment (ApeWisdom)</h2>
+
+            <p>ApeWisdom data feeds Reddit/WSB social mention counts into <code>ticker_metrics</code>, providing social sentiment signals for both equity and crypto trading.</p>
+
+            <h3>Data Feeds</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>Feed</th><th>Scope</th><th>Frequency</th><th>Hours</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Equity Discoverability</strong></td><td>Top 100 tickers by 24h WSB mentions</td><td>Every 15 min</td><td>8 AM&ndash;5 PM ET, Mon&ndash;Fri</td></tr>
+                        <tr><td><strong>Equity Holdings</strong></td><td>1h mention counts for portfolio tickers</td><td>Every 10 min</td><td>8 AM&ndash;5 PM ET, Mon&ndash;Fri</td></tr>
+                        <tr><td><strong>Crypto Discoverability</strong></td><td>Top 100 crypto tickers (Alpaca-tradeable only)</td><td>Every 15 min</td><td>24/7</td></tr>
+                        <tr><td><strong>Crypto Holdings</strong></td><td>1h mention counts for held crypto positions</td><td>Every 10 min</td><td>24/7</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p>Social mention data feeds into <code>ticker_metrics</code> and is surfaced through the discoverability API. Metric TTLs are configured in <code>config/ticker_metrics.yml</code>.</p>
+        </div>
+
+        <!-- 11. HEARTBEATS & SCHEDULING -->
+        <div id="heartbeats" class="section">
+            <h2>11. Heartbeat &amp; Scheduling</h2>
+
+            <h3>Pre-Market Sequence (Weekdays)</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>Time (ET)</th><th>Agent</th><th>Activity</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>7:00 AM</td><td>Westin</td><td>IPO/Momentum research scan</td></tr>
+                        <tr><td>7:20 AM</td><td>Gerrard</td><td>Macro brief (Fed, economic calendar, overnight)</td></tr>
+                        <tr><td>7:45 AM</td><td>Logan</td><td>Value scan</td></tr>
+                        <tr><td>8:15 AM</td><td>Tiverton</td><td>Synthesis + trade approval window</td></tr>
+                        <tr><td>9:30 AM</td><td>All</td><td>Market open &mdash; queued orders released</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Market Hours Heartbeats (9 AM&ndash;3 PM ET, Staggered)</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>Agent</th><th>Frequency</th><th>Minutes</th><th>Session Type</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Dundas</strong></td><td>Every 10 min</td><td>:03, :13, :23, :33, :43, :53</td><td>systemEvent (main session)</td></tr>
+                        <tr><td><strong>Westin</strong></td><td>Every 15 min</td><td>:00, :15, :30, :45</td><td>systemEvent (main session)</td></tr>
+                        <tr><td><strong>Logan</strong></td><td>Every 15 min</td><td>:05, :20, :35, :50</td><td>systemEvent (main session)</td></tr>
+                        <tr><td><strong>Gerrard</strong></td><td>Every 15 min</td><td>:10, :25, :40, :55</td><td>systemEvent (main session)</td></tr>
+                        <tr><td><strong>Boulton</strong></td><td>Every 5 min</td><td>4 AM&ndash;7 PM ET weekdays</td><td>systemEvent (main session)</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Boulton Extended Schedule</h3>
+            <ul>
+                <li><strong>Crypto Night:</strong> 8:30 PM&ndash;3:30 AM ET weekdays (off-hours crypto focus)</li>
+                <li><strong>Weekend:</strong> Every 2 hours Sat&ndash;Sun (crypto discovery + watchlist building)</li>
+            </ul>
+
+            <h3>Research Cycles (10 AM &amp; 2 PM ET)</h3>
+            <p>Deep-dive research sessions staggered across agents: Westin (:02), Logan (:07), Gerrard (:12), Dundas (:17).</p>
+
+            <h3>Infrastructure Jobs</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>Job</th><th>Agent/System</th><th>Frequency</th><th>Hours</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>News Poll</td><td>Tiverton</td><td>Every 5 min</td><td>24/7</td></tr>
+                        <tr><td>Position Reconciliation</td><td>Tiverton</td><td>Hourly</td><td>8 AM&ndash;5 PM ET, Mon&ndash;Fri</td></tr>
+                        <tr><td>Systems Monitor</td><td>Allen</td><td>Every 30 min</td><td>7 AM&ndash;7 PM ET</td></tr>
+                        <tr><td>Trading Floor Sync</td><td>systemd timer</td><td>Every 30 sec</td><td>24/7</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Heartbeat Task Loop</h3>
+            <p>During each heartbeat, agents follow this sequence:</p>
+            <ol>
+                <li><strong>Step 0 &mdash; Catch-Up:</strong> Read trading floor summary + daily log</li>
+                <li><strong>News Check:</strong> Read <code><legacy-shared-root>/news/latest.md</code></li>
+                <li><strong>Scan:</strong> Dig deeper on anything from news affecting holdings/watchlist</li>
+                <li><strong>Assess:</strong> Are current positions still valid? Check stops, targets, thesis</li>
+                <li><strong>Discover:</strong> Hunt for new opportunities (ApeWisdom, web_search, sector news)</li>
+                <li><strong>Request:</strong> If action needed, propose trade</li>
+                <li><strong>Learn:</strong> Update strategy.md based on outcomes</li>
+            </ol>
+
+            <h3>OpenClaw Payload Rules</h3>
+            <div class="warning">
+                <ul>
+                    <li><code>sessionTarget: "main"</code> requires <code>payload.kind: "systemEvent"</code> &mdash; delivered to persistent session with full context. Use for heartbeats.</li>
+                    <li><code>sessionTarget: "isolated"</code> requires <code>payload.kind: "agentTurn"</code> &mdash; fresh ephemeral session. Use for stateless tasks.</li>
+                    <li>There is no <code>payload.kind: "shell"</code>. To run a shell command, wrap it in an agentTurn message.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 12. RAILS TRADING API -->
+        <div id="api" class="section">
+            <h2>12. Rails Trading API</h2>
+
+            <p>Rails 7 + PostgreSQL serves as the <strong>system of record</strong> for all trading operations. The API runs at <code>http://localhost:4000</code> and is managed via systemd.</p>
+
+            <h3>API Surface</h3>
+            <p>All endpoints live under <code>/api/v1/</code>. The API covers:</p>
+            <ul>
+                <li><strong>Trades</strong> &mdash; Full lifecycle: create proposals, approve/deny/confirm, execute, fill, cancel. Idempotent via request IDs.</li>
+                <li><strong>Positions &amp; Wallets</strong> &mdash; Live holdings enriched with market prices. Per-agent cash allocation and reconciliation.</li>
+                <li><strong>Ledger</strong> &mdash; Immutable audit trail with double-entry bookkeeping. Historical snapshots, cost basis breakdown, cash history.</li>
+                <li><strong>Market Data</strong> &mdash; Ticker metrics, social sentiment scores, news articles, tradeable asset lists.</li>
+                <li><strong>Agents</strong> &mdash; Agent profiles, wallet summaries, realized P&amp;L.</li>
+                <li><strong>System</strong> &mdash; Health checks and comprehensive status.</li>
+            </ul>
+
+            <h3>Dashboard</h3>
+            <p>The web dashboard at <code>/</code> provides portfolio summaries, individual trader profiles, trade history ledgers, ticker research pages, and an admin section behind HTTP Basic auth.</p>
+        </div>
+
+        <!-- 13. DATABASE SCHEMA -->
+        <div id="database" class="section">
+            <h2>13. Database Schema &amp; Ledger</h2>
+
+            <p>PostgreSQL 16 serves as the system of record with 28+ tables organized across several domains:</p>
+
+            <ul>
+                <li><strong>Core Trading</strong> &mdash; Agents, trades (AASM state machine), wallets, positions, watchlists. Trade requests provide idempotency; trade events provide an immutable audit log.</li>
+                <li><strong>Ledger</strong> &mdash; Double-entry bookkeeping with immutable transaction records, debit/credit entry pairs, and FIFO position lots for cost basis tracking. Can reconstruct any portfolio state at any point in time.</li>
+                <li><strong>Broker Integration</strong> &mdash; Alpaca order lifecycle, event streams, individual fill records, and account activity ingestion.</li>
+                <li><strong>Market Data</strong> &mdash; Multi-dimensional ticker metrics, 1-minute price samples, news articles with symbol associations.</li>
+                <li><strong>Reconciliation</strong> &mdash; Automated position/wallet reconciliation against Alpaca, with severity-graded diffs and provenance tracking. Event sourcing outbox for distributed reliability.</li>
+            </ul>
+        </div>
+
+        <!-- 14. BACKGROUND JOBS -->
+        <div id="jobs" class="section">
+            <h2>14. Background Jobs (Sidekiq)</h2>
+
+            <p>Redis 7 + Sidekiq handles all asynchronous processing with exponential backoff retries.</p>
+
+            <ul>
+                <li><strong>Trade Execution</strong> &mdash; Auto-submits approved trades to Alpaca, reconciles broker fills every minute, releases queued trades on market open, alerts on stale proposals.</li>
+                <li><strong>Market Data</strong> &mdash; Live price updates (1-min), news polling (5-min), ticker metrics refresh, watchlist imports from agent workspaces.</li>
+                <li><strong>Reconciliation</strong> &mdash; Hourly position reconciliation against Alpaca, wallet syncs, account activity ingestion.</li>
+                <li><strong>Notifications</strong> &mdash; Discord alerts on trade status changes, news dispatch to Dundas for sentry duties, outbox event processing.</li>
+            </ul>
+        </div>
+
+        <!-- 15. RISK MANAGEMENT -->
+        <div id="risk" class="section">
+            <h2>15. Risk Management</h2>
+
+            <h3>Hard Limits (API-Enforced)</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>Limit</th><th>Threshold</th><th>Enforcement</th></tr></thead>
+                    <tbody>
+                        <tr><td>Single position (standard)</td><td>Max 25% of agent wallet</td><td>Hard &mdash; API rejects</td></tr>
+                        <tr><td>Single position (urgent)</td><td>Max 15% of agent wallet</td><td>Hard &mdash; API rejects</td></tr>
+                        <tr><td>Position count</td><td>Max 7 per agent</td><td>Hard &mdash; API rejects</td></tr>
+                        <tr><td>One-agent-per-ticker</td><td>Only one agent holds a ticker</td><td>Hard &mdash; BUY rejected at proposal</td></tr>
+                        <tr><td>Forbidden tickers</td><td>See FORBIDDEN-TICKERS.md</td><td>Hard &mdash; API rejects</td></tr>
+                        <tr><td>Cash available</td><td>Wallet must have sufficient funds</td><td>Hard &mdash; API rejects</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Soft Limits (Advisory)</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>Limit</th><th>Threshold</th><th>Action</th></tr></thead>
+                    <tbody>
+                        <tr><td>Single sector</td><td>Max 60% of portfolio</td><td>Advisory flag, not enforced</td></tr>
+                        <tr><td>Position loss</td><td>-20% from entry</td><td>Re-evaluate thesis (don't auto-exit)</td></tr>
+                        <tr><td>Portfolio loss</td><td>-15% from starting equity</td><td>Tighten new positions (don't halt)</td></tr>
+                        <tr><td>Total exposure</td><td>Max 80% deployed</td><td>Advisory &mdash; 20% reserve</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Escalation Triggers (Tiverton &rarr; Boss)</h3>
+            <ul>
+                <li>Any single position &gt; 30% of agent wallet</li>
+                <li>Total portfolio exposure &gt; 80%</li>
+                <li>Agent requests forbidden ticker</li>
+                <li>First trade of new instrument type (options, futures, crypto)</li>
+                <li>Any agent down &gt;15% on the week</li>
+                <li>Any request that feels "off"</li>
+            </ul>
+
+            <h3>Circuit Breakers</h3>
+            <div class="danger">
+                <ul>
+                    <li><strong>Agent -20% drawdown:</strong> Auto-pause, Boss review required</li>
+                    <li><strong>3 consecutive denied trades:</strong> Review agent strategy</li>
+                    <li><strong>Portfolio -10% in one day:</strong> All agents pause, Boss review</li>
+                </ul>
+            </div>
+
+            <h3>Profit-Taking Discipline</h3>
+            <div class="success">
+                <strong>Let winners run.</strong> Don't trim for profit alone.
+                <ul>
+                    <li>Exit on thesis invalidation, not arbitrary profit targets</li>
+                    <li>Concentration trims valid when single position &gt;40% of wallet</li>
+                    <li>25% entry limits are for sizing, not exit signals</li>
+                    <li>The hard trade: sitting on hands is harder than clicking buttons</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 16. COMMUNICATION -->
+        <div id="communication" class="section">
+            <h2>16. Communication &amp; Discord</h2>
+
+            <h3>Channels</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>Channel</th><th>Purpose</th><th>Content</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>#trading-floor</strong></td><td>Trade coordination</td><td>Proposals, approvals, fills, position commentary, market discussion, news alerts</td></tr>
+                        <tr><td><strong>#infra</strong></td><td>System operations</td><td>Config changes, health checks, debugging, reconciliation, documentation</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="danger">
+                <strong>Mentions MUST use explicit Discord IDs.</strong> Plain <code>@name</code> does not ping and must not be used.
+            </div>
+
+            <h3>Trading Floor Sync</h3>
+            <ul>
+                <li><strong>Frequency:</strong> Every 30 seconds via systemd timer</li>
+                <li><strong>Output:</strong> <code>trading-floor-latest.md</code> (small summary, safe to read)</li>
+                <li><strong>Rolling feed:</strong> <code>trading-floor-feed.md</code> (last 4 days, ~257KB &mdash; never read full file, use grep)</li>
+                <li><strong>Max lag:</strong> 15 minutes (agents read summary at start of every heartbeat)</li>
+            </ul>
+
+            <h3>Formatting Rules</h3>
+            <ul>
+                <li>No markdown tables in Discord &mdash; use bullet lists or code blocks</li>
+                <li>Wrap URLs in <code>&lt;&gt;</code> to suppress embeds</li>
+                <li>Be direct, skip fluff, keep messages concise</li>
+            </ul>
+        </div>
+
+        <!-- 17. PERFORMANCE TRACKING -->
+        <div id="performance" class="section">
+            <h2>17. Performance Tracking</h2>
+
+            <h3>Monthly Review Criteria</h3>
+            <ul>
+                <li><strong>Sharpe ratio</strong> by agent</li>
+                <li><strong>Win rate</strong> (% of profitable trades)</li>
+                <li><strong>Max drawdown</strong> (peak-to-trough decline)</li>
+                <li><strong>Average hold time</strong> (strategy consistency)</li>
+                <li><strong>Realized P&amp;L</strong> from ledger position lots</li>
+            </ul>
+
+            <h3>Evolution Rules</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>Performance</th><th>Action</th></tr></thead>
+                    <tbody>
+                        <tr><td>Negative returns for 2 consecutive months</td><td>Reduce wallet 50%</td></tr>
+                        <tr><td>&gt;15% returns</td><td>Increase wallet 25%</td></tr>
+                        <tr><td>-20% drawdown</td><td>Pause and review strategy</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Audit Trail</h3>
+            <p>Every trade action is logged across multiple immutable layers:</p>
+            <ul>
+                <li><strong>trade_events:</strong> Proposal, confirmation, approval, execution events with actor and timestamp</li>
+                <li><strong>broker_order_events:</strong> Alpaca order lifecycle events with fill data</li>
+                <li><strong>broker_fills:</strong> Individual fill records with price, qty, timestamp</li>
+                <li><strong>ledger_transactions + entries:</strong> Double-entry bookkeeping for every financial event</li>
+                <li><strong>position_lots:</strong> Immutable acquisition records with FIFO cost basis and realized P&amp;L</li>
+                <li><strong>reconciliation_runs + diffs:</strong> Periodic comparison of internal state vs broker state</li>
+            </ul>
+
+            <h3>Key Queries</h3>
+            <pre><code># Realized P&amp;L for agent
+GET /api/v1/agents/westin/realized_pnl
+
+# Full trade audit trail
+GET /api/v1/ledger/audit/trade/{trade_id}
+
+# Portfolio snapshot at a point in time
+GET /api/v1/ledger/portfolio/westin?as_of=2026-02-01T16:00:00Z
+
+# System-wide ledger stats
+GET /api/v1/ledger/stats</code></pre>
+        </div>
+
+        <footer style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border-color); text-align: center; color: var(--text-muted);">
+            <p>Tiverton Trading System &middot; Complete Technical Documentation &middot; Last Updated: 2026-02-09</p>
+            <p style="margin-top: 0.5rem; font-size: 0.9rem;">
+                <a href="/">&#8592; Back to Dashboard</a> |
+                <a href="https://github.com/openclaw/openclaw">OpenClaw Framework</a>
+            </p>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            themeVariables: {
+                primaryColor: '#c9a227',
+                primaryTextColor: '#f4e8d9',
+                lineColor: '#8b7355',
+                background: '#1a1612',
+                mainBkg: '#2a241e'
+            }
+        });
+    </script>
+</body>
+</html>

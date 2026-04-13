@@ -1,0 +1,149 @@
+<%
+  pending_list = Array(pending_trades)
+  queue_list = Array(approved_queue)
+  recent_list = Array(recent_trades)
+  pending_count = pending_list.length
+  approved_count = queue_list.length
+  filtered_summary = trades_summary&.reject { |s| %w[PENDING APPROVED QUEUED].include?(s[:status]) } || []
+
+  approval_timeout_minutes = AppConfig.trades_stale_approval_minutes
+  proposal_timeout_minutes = AppConfig.trades_stale_proposal_minutes
+
+  stale_pending_count = pending_list.count do |trade|
+    trade[:created_at].present? && trade[:created_at] < proposal_timeout_minutes.minutes.ago
+  end
+
+  stale_approved_count = queue_list.count do |trade|
+    trade[:status] == "APPROVED" && trade[:approved_at].present? && trade[:approved_at] < approval_timeout_minutes.minutes.ago
+  end
+
+  stale_queued_count = queue_list.count do |trade|
+    next false unless trade[:status] == "QUEUED"
+    reference_time = trade[:updated_at] || trade[:approved_at]
+    reference_time.present? && reference_time < approval_timeout_minutes.minutes.ago
+  end
+
+  failure_count = recent_list.count { |trade| %w[FAILED CANCELLED].include?(trade[:status]) }
+
+  oldest_pending_at = pending_list.filter_map { |trade| trade[:created_at] }.min
+  oldest_queue_at = queue_list.filter_map { |trade| trade[:approved_at] || trade[:updated_at] }.min
+  oldest_pending_text = oldest_pending_at ? "#{time_ago_in_words(oldest_pending_at)} oldest" : "none"
+  oldest_queue_text = oldest_queue_at ? "#{time_ago_in_words(oldest_queue_at)} oldest" : "none"
+
+  attention_items = [
+    { label: "Stale Pending", value: stale_pending_count, threshold: "#{proposal_timeout_minutes}m+", severity: stale_pending_count.positive? ? "error" : "ok" },
+    { label: "Stale Approved", value: stale_approved_count, threshold: "#{approval_timeout_minutes}m+", severity: stale_approved_count.positive? ? "error" : "ok" },
+    { label: "Stale Queued", value: stale_queued_count, threshold: "#{approval_timeout_minutes}m+", severity: stale_queued_count.positive? ? "warning" : "ok" },
+    { label: "Recent Failures", value: failure_count, threshold: "last 10", severity: failure_count.positive? ? "error" : "ok" }
+  ]
+%>
+
+<!-- Activity header: pipeline stats + action required -->
+<div class="activity-header">
+  <div id="trades-summary" class="pipeline-stats">
+    <% if filtered_summary.any? %>
+      <table>
+        <thead>
+          <tr>
+            <% filtered_summary.each do |item| %>
+              <th><%= item[:status] %></th>
+            <% end %>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <% filtered_summary.each do |item| %>
+              <td><%= item[:count] %></td>
+            <% end %>
+          </tr>
+        </tbody>
+      </table>
+    <% else %>
+      <div class="empty-state">No completed trades</div>
+    <% end %>
+  </div>
+  <div id="action-required" class="action-required">
+    <div class="action-item">
+      <div id="pending-count" class="count <%= pending_count > 0 ? '' : 'zero' %>"><%= pending_count %></div>
+      <div class="label">Pending</div>
+      <div class="meta"><%= oldest_pending_text %></div>
+    </div>
+    <div class="action-item">
+      <div id="approved-count" class="count <%= approved_count > 0 ? '' : 'zero' %>"><%= approved_count %></div>
+      <div class="label">In Queue</div>
+      <div class="meta"><%= oldest_queue_text %></div>
+    </div>
+  </div>
+</div>
+
+<div class="attention-strip">
+  <% attention_items.each do |item| %>
+    <div class="attention-item <%= item[:severity] %>" title="<%= item[:label] %> threshold: <%= item[:threshold] %>">
+      <div class="attention-value"><%= item[:value] %></div>
+      <div class="attention-label"><%= item[:label] %></div>
+      <div class="attention-threshold"><%= item[:threshold] %></div>
+    </div>
+  <% end %>
+</div>
+
+<!-- Recent trades table -->
+<div class="table-wrapper">
+  <table id="recent-trades-table">
+    <thead>
+      <tr>
+        <th class="hide-small">ID</th>
+        <th class="hide-mobile">Agent</th>
+        <th>Ticker</th>
+        <th>Side</th>
+        <th class="hide-mobile">Qty</th>
+        <th class="hide-mobile">Notional / Fill Value</th>
+        <th>Status</th>
+        <th class="hide-mobile">Confirmed</th>
+        <th class="hide-mobile">Approved</th>
+        <th class="hide-small">Updated</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if recent_list.blank? %>
+        <tr><td colspan="10" class="empty-state">No recent trades</td></tr>
+      <% else %>
+        <% recent_list.each do |trade| %>
+          <%
+            status_lower = trade[:status].to_s.downcase
+            market_status = trade[:market_status_at_submission]
+            market_icons = {
+              'weekend' => '📅',
+              'pre-market' => '🌅',
+              'after-hours' => '🌙'
+            }
+            market_labels = {
+              'weekend' => 'Queued (Weekend)',
+              'pre-market' => 'Queued (Pre-Market)',
+              'after-hours' => 'Queued (After Hours)'
+            }
+          %>
+          <tr data-agent-name="<%= trade[:agent_name].to_s.downcase %>">
+            <td class="hide-small"><%= trade[:id] %></td>
+            <td class="hide-mobile"><%= trade[:agent_name] %></td>
+            <td><strong><%= trade[:ticker] %></strong></td>
+            <td><%= trade[:side] %></td>
+            <td class="hide-mobile"><%= dashboard_trade_qty(trade) %></td>
+            <td class="hide-mobile"><%= dashboard_trade_value(trade) %></td>
+            <td>
+              <span class="badge badge-<%= status_lower %>"><%= trade[:status] %></span>
+              <% if trade[:status] == "QUEUED" && trade[:scheduled_for].present? %>
+                <span class="market-queue-indicator" title="Scheduled for <%= trade[:scheduled_for].in_time_zone('America/New_York').strftime('%m/%d %H:%M %Z') %>">⏳</span>
+              <% end %>
+              <% if market_status && market_status != 'market-hours' && market_icons[market_status] %>
+                <span class="market-queue-indicator" title="<%= market_labels[market_status] %>"><%= market_icons[market_status] %></span>
+              <% end %>
+            </td>
+            <td class="hide-mobile"><%= trade[:confirmed_at] ? time_ago_in_words(trade[:confirmed_at]) + " ago" : "-" %></td>
+            <td class="hide-mobile"><%= trade[:approved_at] ? time_ago_in_words(trade[:approved_at]) + " ago" : "-" %></td>
+            <td class="hide-small"><%= trade[:updated_at] ? time_ago_in_words(trade[:updated_at]) + " ago" : "-" %></td>
+          </tr>
+        <% end %>
+      <% end %>
+    </tbody>
+  </table>
+</div>

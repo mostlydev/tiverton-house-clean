@@ -1,0 +1,40 @@
+# Ruby / Bundler
+/.bundle/
+/vendor/bundle/
+/vendor/cache/
+*.gem
+
+# Rails artifacts
+/log/
+/tmp/
+/storage/
+/.claw-describe.json
+/db/*.sqlite3
+/db/*.sqlite3-journal
+/db/*.sqlite3-wal
+/db/*.sqlite3-shm
+
+# Environment
+.env
+.env.*
+
+# Coverage / reports
+/coverage/
+/.byebug_history
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Node (if added later)
+/node_modules/
+
+# Docker
+*.pid
+
+config/settings.local.yml
+config/settings/*.local.yml
+config/environments/*.local.yml
+.github/workflows/

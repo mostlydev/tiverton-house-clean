@@ -1,0 +1,106 @@
+<% content_for :title, "Position #{@position.ticker}" %>
+
+<div class="admin-header">
+  <div class="breadcrumb">
+    <%= link_to "ADMIN", admin_root_path %>
+    <span class="breadcrumb-separator">/</span>
+    <%= link_to "POSITIONS", admin_positions_path %>
+    <span class="breadcrumb-separator">/</span>
+    <span><%= @position.ticker %></span>
+  </div>
+  <h1><%= @position.ticker %> Position</h1>
+</div>
+
+<div class="detail-grid">
+  <div class="detail-section">
+    <h3>Position Details</h3>
+    <div class="detail-row">
+      <span class="detail-label">Agent</span>
+      <span class="detail-value">
+        <%= link_to @position.agent&.name || @position.agent_id, admin_agent_path(@position.agent) if @position.agent %>
+      </span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Ticker</span>
+      <span class="detail-value"><%= @position.ticker %></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Quantity</span>
+      <span class="detail-value"><%= number_with_delimiter(@position.qty) %></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Avg Entry Price</span>
+      <span class="detail-value">$<%= number_with_precision(@position.avg_entry_price, precision: 2) %></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Opened At</span>
+      <span class="detail-value"><%= @position.opened_at.strftime("%Y-%m-%d %H:%M") if @position.opened_at %></span>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <h3>Market Data</h3>
+    <div class="detail-row">
+      <span class="detail-label">Current Price</span>
+      <span class="detail-value">$<%= number_with_precision((@position.current_value / @position.qty), precision: 2) if @position.qty > 0 %></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Current Value</span>
+      <span class="detail-value">$<%= number_with_delimiter(@position.current_value.round(2)) %></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Cost Basis</span>
+      <span class="detail-value">$<%= number_with_delimiter((@position.avg_entry_price * @position.qty).round(2)) %></span>
+    </div>
+    <% pnl = @position.current_value - (@position.avg_entry_price * @position.qty) %>
+    <div class="detail-row">
+      <span class="detail-label">Unrealized P&L</span>
+      <span class="detail-value" style="color: <%= pnl >= 0 ? 'var(--accent-green)' : 'var(--accent-red)' %>">
+        <%= pnl >= 0 ? '+' : '' %>$<%= number_with_delimiter(pnl.round(2)) %>
+      </span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">P&L %</span>
+      <span class="detail-value" style="color: <%= pnl >= 0 ? 'var(--accent-green)' : 'var(--accent-red)' %>">
+        <% cost_basis = @position.avg_entry_price * @position.qty %>
+        <%= pnl >= 0 ? '+' : '' %><%= number_with_precision((pnl / cost_basis * 100), precision: 2) if cost_basis > 0 %>%
+      </span>
+    </div>
+  </div>
+</div>
+
+<h2>Position Lots (<%= @lots.count %>)</h2>
+<% if @lots.any? %>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Quantity</th>
+          <th>Purchase Price</th>
+          <th>Acquired At</th>
+          <th>Trade ID</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @lots.each do |lot| %>
+          <tr>
+            <td class="mono"><%= lot.id %></td>
+            <td class="mono"><%= number_with_delimiter(lot.qty) %></td>
+            <td class="mono">$<%= number_with_precision(lot.cost_basis_per_share, precision: 2) %></td>
+            <td class="mono text-secondary"><%= lot.opened_at.strftime("%Y-%m-%d %H:%M") %></td>
+            <td class="mono"><%= lot.open_source_id %></td>
+            <td>
+              <span class="badge <%= lot.qty > 0 ? 'badge-success' : 'badge-info' %>">
+                <%= lot.qty > 0 ? 'OPEN' : 'CLOSED' %>
+              </span>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <p class="text-secondary">No lots found</p>
+<% end %>

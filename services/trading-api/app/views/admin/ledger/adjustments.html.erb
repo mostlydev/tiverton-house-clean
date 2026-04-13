@@ -1,0 +1,49 @@
+<% content_for :title, "Adjustments" %>
+
+<div class="admin-header">
+  <div class="breadcrumb">
+    <%= link_to "ADMIN", admin_root_path %>
+    <span class="breadcrumb-separator">/</span>
+    <%= link_to "LEDGER", admin_ledger_path %>
+    <span class="breadcrumb-separator">/</span>
+    <span>ADJUSTMENTS</span>
+  </div>
+  <h1>Ledger Adjustments</h1>
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Agent ID</th>
+        <th>Type</th>
+        <th>Amount</th>
+        <th>Ticker</th>
+        <th>Quantity</th>
+        <th>Reason</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @adjustments.each do |adj| %>
+        <tr>
+          <td class="mono"><%= adj.id %></td>
+          <td class="mono text-secondary"><%= adj.ledger_transaction_id %></td>
+          <td>
+            <span class="badge badge-warning"><%= adj.reason_code %></span>
+          </td>
+          <td class="mono text-secondary">
+            <%= adj.before_state&.dig('cash') || '-' %> → <%= adj.after_state&.dig('cash') || '-' %>
+          </td>
+          <td class="mono">-</td>
+          <td class="mono">-</td>
+          <td class="text-secondary"><%= adj.reason_description %></td>
+          <td class="mono text-secondary"><%= adj.created_at.strftime("%Y-%m-%d %H:%M:%S") %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<%= paginate @adjustments if defined?(paginate) %>

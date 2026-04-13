@@ -1,0 +1,454 @@
+<% content_for :title, "#{@trader[:name]} Ledger · The Tiverton House" %>
+<% content_for :description, "Trading ledger for #{@trader[:name]} showing all trades and running P&L" %>
+
+<style>
+  nav {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-gold);
+    padding: 1.2rem 2rem;
+  }
+
+  .nav-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .nav-logo {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--accent-cream);
+    text-decoration: none;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+  }
+
+  .nav-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.3s;
+    font-size: 0.95rem;
+  }
+
+  .nav-link:hover { color: var(--accent-gold); }
+
+  .ledger-page {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .page-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-gold);
+  }
+
+  .trader-avatar-small {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 3px solid var(--accent-gold);
+    object-fit: cover;
+  }
+
+  .page-title-group { flex: 1; }
+
+  .page-title {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 2.2rem;
+    font-weight: 600;
+    color: var(--accent-gold);
+    letter-spacing: 1px;
+    margin-bottom: 0.25rem;
+  }
+
+  .page-subtitle {
+    color: var(--text-secondary);
+    font-style: italic;
+  }
+
+  /* Summary Cards */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .summary-card {
+    background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-tertiary) 100%);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1.25rem;
+    text-align: center;
+  }
+
+  .summary-card.highlight {
+    border-color: var(--border-gold);
+    background: linear-gradient(135deg, rgba(198, 173, 99, 0.1) 0%, var(--bg-card) 100%);
+  }
+
+  .summary-card.positive { border-color: var(--accent-green); }
+  .summary-card.negative { border-color: var(--accent-red); }
+
+  .summary-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+  }
+
+  .summary-value {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--accent-cream);
+  }
+
+  .summary-value.positive { color: var(--accent-green); }
+  .summary-value.negative { color: var(--accent-red); }
+
+  /* Ledger Table */
+  .ledger-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(90deg, rgba(201, 162, 39, 0.08) 0%, transparent 100%);
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .section-title {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--accent-cream);
+    letter-spacing: 0.5px;
+  }
+
+  .trade-count {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    background: var(--bg-secondary);
+    padding: 0.35rem 0.8rem;
+    border-radius: 20px;
+  }
+
+  .ledger-table-wrapper {
+    overflow-x: auto;
+  }
+
+  .ledger-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+  }
+
+  .ledger-table th {
+    text-align: left;
+    padding: 1rem 1rem;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    font-weight: 500;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+  }
+
+  .ledger-table th:first-child { padding-left: 1.5rem; }
+  .ledger-table th:last-child { padding-right: 1.5rem; }
+
+  .ledger-table td {
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+    vertical-align: middle;
+  }
+
+  .ledger-table td:first-child { padding-left: 1.5rem; }
+  .ledger-table td:last-child { padding-right: 1.5rem; }
+
+  .ledger-table tr:last-child td { border-bottom: none; }
+
+  .ledger-table tr:hover { background: rgba(198, 173, 99, 0.03); }
+
+  /* Cell styling */
+  .date-cell {
+    font-family: 'Source Serif 4', serif;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    font-size: 0.85rem;
+  }
+
+  .ticker-cell {
+    font-family: 'Libre Baskerville', serif;
+    font-weight: 600;
+    color: var(--accent-gold);
+  }
+
+  .side-badge {
+    display: inline-block;
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .side-badge.buy {
+    background: rgba(93, 138, 74, 0.2);
+    color: var(--accent-green);
+    border: 1px solid rgba(93, 138, 74, 0.4);
+  }
+
+  .side-badge.sell {
+    background: rgba(166, 61, 64, 0.2);
+    color: var(--accent-red);
+    border: 1px solid rgba(166, 61, 64, 0.4);
+  }
+
+  .qty-cell {
+    font-family: 'Libre Baskerville', serif;
+    text-align: right;
+  }
+
+  .price-cell {
+    text-align: right;
+    color: var(--text-secondary);
+  }
+
+  .value-cell {
+    font-family: 'Libre Baskerville', serif;
+    text-align: right;
+    font-weight: 500;
+  }
+
+  .value-cell.inflow { color: var(--accent-green); }
+  .value-cell.outflow { color: var(--accent-red); }
+
+  .running-balance {
+    font-family: 'Libre Baskerville', serif;
+    text-align: right;
+    font-weight: 600;
+    color: var(--accent-cream);
+  }
+
+  .thesis-cell {
+    max-width: 300px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    font-style: italic;
+  }
+
+  .thesis-cell .truncated {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-muted);
+  }
+
+  .empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+
+  footer {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-muted);
+    margin-top: 3rem;
+  }
+
+  @media (max-width: 768px) {
+    .ledger-page { padding: 1rem; }
+    .page-header { flex-direction: column; text-align: center; }
+    .page-title { font-size: 1.6rem; }
+    .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    .ledger-table { font-size: 0.85rem; }
+    .ledger-table th, .ledger-table td { padding: 0.7rem 0.5rem; }
+    .thesis-cell { display: none; }
+  }
+</style>
+
+<nav>
+  <div class="nav-content">
+    <%= link_to "Tiverton House", root_path, class: "nav-logo" %>
+    <div class="nav-links">
+      <%= link_to "#{@trader[:name]} Profile", trader_path(@trader[:id]), class: "nav-link" %>
+      <%= link_to "Dashboard", root_path, class: "nav-link" %>
+    </div>
+  </div>
+</nav>
+
+<div class="ledger-page">
+  <div class="page-header">
+    <%= image_tag @trader[:image], alt: @trader[:name], class: "trader-avatar-small", onerror: "this.style.display='none'" %>
+    <div class="page-title-group">
+      <h1 class="page-title"><%= @trader[:name] %> Ledger</h1>
+      <div class="page-subtitle">Trading activity and P&L</div>
+    </div>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card highlight">
+      <div class="summary-label">Starting Balance</div>
+      <div class="summary-value"><%= number_to_currency(@summary[:starting_balance]) %></div>
+    </div>
+    <div class="summary-card <%= @summary[:vs_starting] >= 0 ? 'positive' : 'negative' %>">
+      <div class="summary-label">vs <%= number_to_currency(@summary[:starting_balance], precision: 0) %> Start</div>
+      <div class="summary-value <%= @summary[:vs_starting] >= 0 ? 'positive' : 'negative' %>">
+        <%= @summary[:vs_starting] >= 0 ? '+' : '' %><%= number_to_currency(@summary[:vs_starting]) %>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">Current Total</div>
+      <div class="summary-value"><%= number_to_currency(@summary[:current_total]) %></div>
+    </div>
+    <div class="summary-card <%= @summary[:realized_pnl] >= 0 ? 'positive' : 'negative' %>">
+      <div class="summary-label">Realized P&L</div>
+      <div class="summary-value <%= @summary[:realized_pnl] >= 0 ? 'positive' : 'negative' %>">
+        <%= @summary[:realized_pnl] >= 0 ? '+' : '' %><%= number_to_currency(@summary[:realized_pnl]) %>
+      </div>
+    </div>
+    <div class="summary-card <%= @summary[:unrealized_pnl] >= 0 ? 'positive' : 'negative' %>">
+      <div class="summary-label">Unrealized P&L</div>
+      <div class="summary-value <%= @summary[:unrealized_pnl] >= 0 ? 'positive' : 'negative' %>">
+        <%= @summary[:unrealized_pnl] >= 0 ? '+' : '' %><%= number_to_currency(@summary[:unrealized_pnl]) %>
+      </div>
+    </div>
+    <div class="summary-card <%= @summary[:total_pnl] >= 0 ? 'positive' : 'negative' %>">
+      <div class="summary-label">Total P&L</div>
+      <div class="summary-value <%= @summary[:total_pnl] >= 0 ? 'positive' : 'negative' %>">
+        <%= @summary[:total_pnl] >= 0 ? '+' : '' %><%= number_to_currency(@summary[:total_pnl]) %>
+      </div>
+    </div>
+  </div>
+
+  <div class="ledger-section">
+    <div class="section-header">
+      <h2 class="section-title">Trade History</h2>
+      <span class="trade-count"><%= @summary[:trade_count] %> trades</span>
+    </div>
+
+    <% if @trades.any? %>
+      <%
+        # Calculate running cash balance from the recorded starting balance
+        starting_cash = @starting_balance
+        running_balance = starting_cash
+        balances = []
+        @trades.each do |trade|
+          if trade[:side] == 'SELL'
+            running_balance += trade[:filled_value]
+          else
+            running_balance -= trade[:filled_value]
+          end
+          balances << running_balance
+        end
+        balances_reversed = balances.reverse
+      %>
+      <div class="ledger-table-wrapper">
+        <table class="ledger-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Ticker</th>
+              <th>Side</th>
+              <th>Qty</th>
+              <th>Price</th>
+              <th>Value</th>
+              <th>Balance</th>
+              <th>Thesis</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @trades.reverse.each_with_index do |trade, idx| %>
+              <tr>
+                <td class="date-cell">
+                  <% if trade[:executed_at] %>
+                    <%= trade[:executed_at].strftime("%b %d, %Y") %>
+                    <br>
+                    <span style="opacity: 0.7;"><%= trade[:executed_at].strftime("%l:%M %p") %></span>
+                  <% else %>
+                    —
+                  <% end %>
+                </td>
+                <td class="ticker-cell"><%= trade[:ticker] %></td>
+                <td>
+                  <span class="side-badge <%= trade[:side].downcase %>"><%= trade[:side] %></span>
+                </td>
+                <td class="qty-cell"><%= number_with_precision(trade[:qty_filled], precision: 4, strip_insignificant_zeros: true) %></td>
+                <td class="price-cell"><%= number_to_currency(trade[:avg_fill_price]) %></td>
+                <td class="value-cell <%= trade[:side] == 'SELL' ? 'inflow' : 'outflow' %>">
+                  <%= trade[:side] == 'SELL' ? '+' : '-' %><%= number_to_currency(trade[:filled_value]) %>
+                </td>
+                <% balance = balances_reversed[idx] %>
+                <% vs_start = balance - starting_cash %>
+                <td class="running-balance">
+                  <%= number_to_currency(balance) %>
+                  <br>
+                  <span style="font-size: 0.75rem; color: var(<%= vs_start >= 0 ? '--accent-green' : '--accent-red' %>);">
+                    (<%= vs_start >= 0 ? '+' : '' %><%= number_to_currency(vs_start, precision: 0) %>)
+                  </span>
+                </td>
+                <td class="thesis-cell">
+                  <% if trade[:thesis].present? %>
+                    <div class="truncated" title="<%= trade[:thesis].gsub('"', '&quot;') %>">
+                      <%= trade[:thesis].split("\\n").first.truncate(100) %>
+                    </div>
+                  <% else %>
+                    <span style="color: var(--text-muted);">—</span>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="empty-state">
+        <div class="empty-state-icon">📊</div>
+        <p>No completed trades yet.</p>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<footer>
+  <p style="font-family: 'Libre Baskerville', serif; color: var(--text-secondary);">The Tiverton House</p>
+</footer>

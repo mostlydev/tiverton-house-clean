@@ -1,0 +1,547 @@
+ticker_metrics:
+  default_ttl_seconds: 3600
+
+  # Refresh rate limits — minimum seconds between queued fetches per fetcher.
+  # These gate how fast Sidekiq fires external API calls to avoid 429s.
+  refresh:
+    lock_seconds: 120
+    min_interval_seconds:
+      apewisdom: 30
+      quiver_wsb: 30
+      fundamentals: 15
+
+  ttl_seconds:
+    # Social / fast signals (minutes)
+    social_mentions_5m: 300
+    social_mentions_15m: 900
+    social_mentions_1h: 3600
+    social_mentions_24h: 86400
+    sentiment_score_5m: 300
+    sentiment_score_15m: 900
+    sentiment_score_1h: 3600
+    news_event_score: 3600
+
+    # Price / volume (minutes to days)
+    price_return_5m: 300
+    price_return_15m: 900
+    price_return_1h: 3600
+    price_return_1d: 86400
+    rs_vs_spy_15m: 900
+    rs_vs_qqq_15m: 900
+    rs_vs_spy_1h: 3600
+    rs_vs_qqq_1h: 3600
+    volume_spike_1m: 300
+    volume_spike_5m: 900
+    volume_spike_1h: 3600
+    volume_avg_30d: 86400
+    unusual_volume_flag: 300
+
+    # Fundamentals — income statement (quarterly / annual)
+    fs_income_revenue: 7776000
+    fs_income_cost_of_revenue: 7776000
+    fs_income_gross_profit: 7776000
+    fs_income_operating_expense: 7776000
+    fs_income_operating_income: 7776000
+    fs_income_interest_expense: 7776000
+    fs_income_ebit: 7776000
+    fs_income_net_income: 7776000
+    fs_income_eps: 7776000
+    fs_income_eps_diluted: 7776000
+    fs_income_dividends_per_share: 7776000
+    fs_income_shares_diluted: 7776000
+    fs_income_rnd: 7776000
+
+    # Fundamentals — balance sheet (quarterly / annual)
+    fs_balance_total_assets: 7776000
+    fs_balance_current_assets: 7776000
+    fs_balance_total_liabilities: 7776000
+    fs_balance_current_liabilities: 7776000
+    fs_balance_total_equity: 7776000
+    fs_balance_cash_and_equivalents: 7776000
+    fs_balance_total_debt: 7776000
+    fs_balance_shareholders_equity: 7776000
+    fs_balance_retained_earnings: 7776000
+    fs_balance_outstanding_shares: 7776000
+    fs_balance_inventory: 7776000
+    fs_balance_goodwill_and_intangibles: 7776000
+
+    # Fundamentals — cash flow (quarterly / annual)
+    fs_cashflow_operations: 7776000
+    fs_cashflow_capex: 7776000
+    fs_cashflow_investing: 7776000
+    fs_cashflow_financing: 7776000
+    fs_cashflow_free_cash_flow: 7776000
+    fs_cashflow_dividends: 7776000
+    fs_cashflow_buybacks: 7776000
+    fs_cashflow_depreciation: 7776000
+    fs_cashflow_stock_comp: 7776000
+    fs_cashflow_net_change: 7776000
+    fs_cashflow_operating_cash_flow: 7776000
+
+    # Derived fundamentals — valuation (quarterly/ttm)
+    val_pe: 2592000
+    val_ps: 2592000
+    val_pb: 2592000
+    val_ev_ebitda: 2592000
+    val_ev_revenue: 2592000
+    val_peg: 2592000
+    val_fcf_yield: 2592000
+    val_enterprise_value: 2592000
+
+    # Derived fundamentals — profitability (quarterly/ttm)
+    profit_roe: 2592000
+    profit_roa: 2592000
+    profit_roic: 2592000
+    profit_gross_margin: 2592000
+    profit_operating_margin: 2592000
+    profit_net_margin: 2592000
+
+    # Derived fundamentals — growth (quarterly/ttm)
+    growth_revenue_yoy: 2592000
+    growth_revenue_qoq: 2592000
+    growth_earnings_yoy: 2592000
+    growth_eps_yoy: 2592000
+    growth_fcf_yoy: 2592000
+    growth_book_value_yoy: 2592000
+    growth_operating_income_yoy: 2592000
+    growth_ebitda_yoy: 2592000
+
+    # Derived fundamentals — health/leverage (quarterly/ttm)
+    health_debt_to_equity: 2592000
+    health_debt_to_assets: 2592000
+    health_interest_coverage: 2592000
+    health_current_ratio: 2592000
+    health_quick_ratio: 2592000
+    yield_change_30d: 86400
+    payout_growth_yoy: 2592000
+    beaten_down_score: 86400
+    quality_value_score: 86400
+
+    # Analyst estimates (weekly to monthly)
+    analyst_eps_estimate_current_quarter: 604800
+    analyst_eps_estimate_next_quarter: 604800
+    analyst_eps_estimate_current_fy: 604800
+    analyst_eps_estimate_next_fy: 604800
+    analyst_revenue_estimate_current_fy: 604800
+    analyst_revenue_estimate_next_fy: 604800
+    analyst_price_target_mean: 2592000
+    analyst_price_target_high: 2592000
+    analyst_price_target_low: 2592000
+    analyst_coverage_count: 2592000
+
+  # Human-readable labels and hints for each metric.
+  # label:  Short display name for dashboards and tables.
+  # hint:   One-line description for tooltips and agent context.
+  # format: How to render the value (currency_large, currency, percent, ratio, integer, number).
+  labels:
+    # --- Social / fast signals ---
+    social_mentions_5m:
+      label: "Mentions (5m)"
+      hint: "Social media mention count over the last 5 minutes."
+      format: integer
+    social_mentions_15m:
+      label: "Mentions (15m)"
+      hint: "Social media mention count over the last 15 minutes."
+      format: integer
+    social_mentions_1h:
+      label: "Mentions (1h)"
+      hint: "Social media mention count over the last hour."
+      format: integer
+    social_mentions_24h:
+      label: "Mentions (24h)"
+      hint: "Social media mention count over the last 24 hours."
+      format: integer
+    sentiment_score_5m:
+      label: "Sentiment (5m)"
+      hint: "Aggregated sentiment score (-1 to +1) over the last 5 minutes."
+      format: number
+    sentiment_score_15m:
+      label: "Sentiment (15m)"
+      hint: "Aggregated sentiment score (-1 to +1) over the last 15 minutes."
+      format: number
+    sentiment_score_1h:
+      label: "Sentiment (1h)"
+      hint: "Aggregated sentiment score (-1 to +1) over the last hour."
+      format: number
+    news_event_score:
+      label: "News Score"
+      hint: "Composite score reflecting news event significance and urgency."
+      format: number
+
+    # --- Price / volume ---
+    price_return_5m:
+      label: "Return (5m)"
+      hint: "Price return over the last 5 minutes as a decimal (0.01 = +1%)."
+      format: percent
+    price_return_15m:
+      label: "Return (15m)"
+      hint: "Price return over the last 15 minutes as a decimal."
+      format: percent
+    price_return_1h:
+      label: "Return (1h)"
+      hint: "Price return over the last hour as a decimal."
+      format: percent
+    price_return_1d:
+      label: "Return (1d)"
+      hint: "Price return over the last trading day as a decimal."
+      format: percent
+    rs_vs_spy_15m:
+      label: "RS vs SPY (15m)"
+      hint: "Ticker return minus SPY return over the last 15 minutes."
+      format: percent
+    rs_vs_qqq_15m:
+      label: "RS vs QQQ (15m)"
+      hint: "Ticker return minus QQQ return over the last 15 minutes."
+      format: percent
+    rs_vs_spy_1h:
+      label: "RS vs SPY (1h)"
+      hint: "Ticker return minus SPY return over the last hour."
+      format: percent
+    rs_vs_qqq_1h:
+      label: "RS vs QQQ (1h)"
+      hint: "Ticker return minus QQQ return over the last hour."
+      format: percent
+    volume_spike_1m:
+      label: "Vol Spike (1m)"
+      hint: "Current 1-minute volume divided by the recent 1-minute average."
+      format: ratio
+    volume_spike_5m:
+      label: "Vol Spike (5m)"
+      hint: "Current 5-minute volume divided by the recent 5-minute baseline."
+      format: ratio
+    volume_spike_1h:
+      label: "Vol Spike (1h)"
+      hint: "Current hourly volume divided by the 30-day hourly average. >2.0 is notable."
+      format: ratio
+    volume_avg_30d:
+      label: "Avg Volume (30d)"
+      hint: "Average daily trading volume over the past 30 days."
+      format: integer
+    unusual_volume_flag:
+      label: "Unusual Volume"
+      hint: "1 when recent 1m or 5m volume exceeds the unusual-volume threshold."
+      format: integer
+
+    # --- Income statement ---
+    fs_income_revenue:
+      label: "Revenue"
+      hint: "Total revenue (top-line sales) for the period."
+      format: currency_large
+    fs_income_cost_of_revenue:
+      label: "Cost of Revenue"
+      hint: "Direct costs attributable to goods/services sold."
+      format: currency_large
+    fs_income_gross_profit:
+      label: "Gross Profit"
+      hint: "Revenue minus cost of revenue."
+      format: currency_large
+    fs_income_operating_expense:
+      label: "OpEx"
+      hint: "Total operating expenses (SG&A, R&D, etc.) excluding COGS."
+      format: currency_large
+    fs_income_operating_income:
+      label: "Operating Income"
+      hint: "Gross profit minus operating expenses (EBIT proxy)."
+      format: currency_large
+    fs_income_interest_expense:
+      label: "Interest Expense"
+      hint: "Cost of servicing debt for the period."
+      format: currency_large
+    fs_income_ebit:
+      label: "EBIT"
+      hint: "Earnings before interest and taxes."
+      format: currency_large
+    fs_income_net_income:
+      label: "Net Income"
+      hint: "Bottom-line profit after all expenses and taxes."
+      format: currency_large
+    fs_income_eps:
+      label: "EPS (Basic)"
+      hint: "Earnings per share, basic (net income / basic shares)."
+      format: currency
+    fs_income_eps_diluted:
+      label: "EPS (Diluted)"
+      hint: "Earnings per share, diluted (accounts for options/convertibles)."
+      format: currency
+    fs_income_dividends_per_share:
+      label: "Dividends / Share"
+      hint: "Cash dividends declared per common share for the reporting period."
+      format: currency
+    fs_income_shares_diluted:
+      label: "Shares (Diluted)"
+      hint: "Weighted-average diluted share count."
+      format: integer
+    fs_income_rnd:
+      label: "R&D"
+      hint: "Research and development spending for the period."
+      format: currency_large
+
+    # --- Balance sheet ---
+    fs_balance_total_assets:
+      label: "Total Assets"
+      hint: "Sum of all assets on the balance sheet."
+      format: currency_large
+    fs_balance_current_assets:
+      label: "Current Assets"
+      hint: "Assets expected to convert to cash within one year."
+      format: currency_large
+    fs_balance_total_liabilities:
+      label: "Total Liabilities"
+      hint: "Sum of all liabilities (current + long-term)."
+      format: currency_large
+    fs_balance_current_liabilities:
+      label: "Current Liabilities"
+      hint: "Obligations due within one year."
+      format: currency_large
+    fs_balance_total_equity:
+      label: "Total Equity"
+      hint: "Total assets minus total liabilities."
+      format: currency_large
+    fs_balance_cash_and_equivalents:
+      label: "Cash & Equivalents"
+      hint: "Cash on hand plus short-term liquid investments."
+      format: currency_large
+    fs_balance_total_debt:
+      label: "Total Debt"
+      hint: "Short-term + long-term debt obligations."
+      format: currency_large
+    fs_balance_shareholders_equity:
+      label: "Shareholders' Equity"
+      hint: "Net assets belonging to shareholders (assets - liabilities)."
+      format: currency_large
+    fs_balance_retained_earnings:
+      label: "Retained Earnings"
+      hint: "Cumulative net income reinvested in the business (not paid as dividends)."
+      format: currency_large
+    fs_balance_outstanding_shares:
+      label: "Shares Outstanding"
+      hint: "Total shares currently held by all shareholders."
+      format: integer
+    fs_balance_inventory:
+      label: "Inventory"
+      hint: "Value of goods held for sale or in production."
+      format: currency_large
+    fs_balance_goodwill_and_intangibles:
+      label: "Goodwill & Intangibles"
+      hint: "Non-physical assets from acquisitions and IP."
+      format: currency_large
+
+    # --- Cash flow ---
+    fs_cashflow_operations:
+      label: "Cash from Ops"
+      hint: "Net cash generated by core business operations."
+      format: currency_large
+    fs_cashflow_capex:
+      label: "CapEx"
+      hint: "Capital expenditures (property, equipment, infrastructure)."
+      format: currency_large
+    fs_cashflow_investing:
+      label: "Investing"
+      hint: "Net cash used in investing activities (acquisitions, securities)."
+      format: currency_large
+    fs_cashflow_financing:
+      label: "Financing"
+      hint: "Net cash from financing (debt issuance/repayment, equity, dividends)."
+      format: currency_large
+    fs_cashflow_free_cash_flow:
+      label: "Free Cash Flow"
+      hint: "Cash from operations minus capital expenditures. Key measure of cash generation."
+      format: currency_large
+    fs_cashflow_dividends:
+      label: "Dividends Paid"
+      hint: "Total cash dividends paid to shareholders."
+      format: currency_large
+    fs_cashflow_buybacks:
+      label: "Buybacks"
+      hint: "Cash spent repurchasing company shares."
+      format: currency_large
+    fs_cashflow_depreciation:
+      label: "D&A"
+      hint: "Depreciation and amortization (non-cash charge added back to cash flow)."
+      format: currency_large
+    fs_cashflow_stock_comp:
+      label: "Stock Comp"
+      hint: "Stock-based compensation expense (non-cash, added back to cash flow)."
+      format: currency_large
+    fs_cashflow_net_change:
+      label: "Net Cash Change"
+      hint: "Total change in cash position for the period."
+      format: currency_large
+    fs_cashflow_operating_cash_flow:
+      label: "Operating CF"
+      hint: "Cash generated from operations (alias for cash from ops)."
+      format: currency_large
+
+    # --- Valuation ---
+    val_pe:
+      label: "P/E"
+      hint: "Price-to-earnings ratio. Market price per share / EPS. Lower may indicate value."
+      format: ratio
+    val_ps:
+      label: "P/S"
+      hint: "Price-to-sales ratio. Market cap / revenue. Useful for unprofitable companies."
+      format: ratio
+    val_pb:
+      label: "P/B"
+      hint: "Price-to-book ratio. Market cap / shareholders' equity."
+      format: ratio
+    val_ev_ebitda:
+      label: "EV/EBITDA"
+      hint: "Enterprise value / EBITDA. Capital-structure-neutral valuation multiple."
+      format: ratio
+    val_ev_revenue:
+      label: "EV/Revenue"
+      hint: "Enterprise value / revenue. Useful for high-growth or unprofitable companies."
+      format: ratio
+    val_peg:
+      label: "PEG"
+      hint: "P/E divided by earnings growth rate. <1 may signal undervaluation relative to growth."
+      format: ratio
+    val_fcf_yield:
+      label: "FCF Yield"
+      hint: "Free cash flow / market cap, expressed as a decimal. Higher = more cash per dollar invested."
+      format: percent
+    val_enterprise_value:
+      label: "Enterprise Value"
+      hint: "Market cap + debt - cash. Total takeover cost of the business."
+      format: currency_large
+
+    # --- Profitability ---
+    profit_roe:
+      label: "ROE"
+      hint: "Return on equity. Net income / shareholders' equity. Measures profit efficiency."
+      format: percent
+    profit_roa:
+      label: "ROA"
+      hint: "Return on assets. Net income / total assets."
+      format: percent
+    profit_roic:
+      label: "ROIC"
+      hint: "Return on invested capital. NOPAT / invested capital. Measures capital allocation skill."
+      format: percent
+    profit_gross_margin:
+      label: "Gross Margin"
+      hint: "Gross profit / revenue. Higher = stronger pricing power or lower input costs."
+      format: percent
+    profit_operating_margin:
+      label: "Operating Margin"
+      hint: "Operating income / revenue. Core business profitability before interest/taxes."
+      format: percent
+    profit_net_margin:
+      label: "Net Margin"
+      hint: "Net income / revenue. Bottom-line profitability after all costs."
+      format: percent
+
+    # --- Growth ---
+    growth_revenue_yoy:
+      label: "Revenue Growth"
+      hint: "Year-over-year revenue change as a decimal (0.10 = +10%)."
+      format: percent
+    growth_revenue_qoq:
+      label: "Revenue QoQ"
+      hint: "Quarter-over-quarter revenue change."
+      format: percent
+    growth_earnings_yoy:
+      label: "Earnings Growth"
+      hint: "Year-over-year net income change."
+      format: percent
+    growth_eps_yoy:
+      label: "EPS Growth"
+      hint: "Year-over-year EPS change."
+      format: percent
+    growth_fcf_yoy:
+      label: "FCF Growth"
+      hint: "Year-over-year free cash flow change."
+      format: percent
+    growth_book_value_yoy:
+      label: "Book Value Growth"
+      hint: "Year-over-year change in shareholders' equity per share."
+      format: percent
+    growth_operating_income_yoy:
+      label: "Op Income Growth"
+      hint: "Year-over-year operating income change."
+      format: percent
+    growth_ebitda_yoy:
+      label: "EBITDA Growth"
+      hint: "Year-over-year EBITDA change."
+      format: percent
+
+    # --- Health / leverage ---
+    health_debt_to_equity:
+      label: "Debt/Equity"
+      hint: "Total debt / shareholders' equity. Higher = more leveraged. >2 is aggressive."
+      format: ratio
+    health_debt_to_assets:
+      label: "Debt/Assets"
+      hint: "Total debt / total assets. Proportion of assets financed by debt."
+      format: ratio
+    health_interest_coverage:
+      label: "Interest Coverage"
+      hint: "EBIT / interest expense. Higher = more room to service debt. <1.5 is risky."
+      format: ratio
+    health_current_ratio:
+      label: "Current Ratio"
+      hint: "Current assets / current liabilities. >1 means short-term obligations are covered."
+      format: ratio
+    health_quick_ratio:
+      label: "Quick Ratio"
+      hint: "Liquid assets / current liabilities. Stricter than current ratio (excludes inventory)."
+      format: ratio
+    yield_change_30d:
+      label: "Yield Change (30d)"
+      hint: "Absolute change in dividend yield over the last 30 days."
+      format: percent
+    payout_growth_yoy:
+      label: "Payout Growth (YoY)"
+      hint: "Year-over-year growth in dividends per share."
+      format: percent
+    beaten_down_score:
+      label: "Beaten-Down Score"
+      hint: "Composite score for pullback magnitude while preserving value and quality characteristics."
+      format: number
+    quality_value_score:
+      label: "Quality/Value Score"
+      hint: "Composite score blending valuation, balance-sheet strength, profitability, and dividend quality."
+      format: number
+
+    # --- Analyst estimates ---
+    analyst_eps_estimate_current_quarter:
+      label: "EPS Est (This Q)"
+      hint: "Consensus EPS estimate for the current quarter."
+      format: currency
+    analyst_eps_estimate_next_quarter:
+      label: "EPS Est (Next Q)"
+      hint: "Consensus EPS estimate for the next quarter."
+      format: currency
+    analyst_eps_estimate_current_fy:
+      label: "EPS Est (This FY)"
+      hint: "Consensus EPS estimate for the current fiscal year."
+      format: currency
+    analyst_eps_estimate_next_fy:
+      label: "EPS Est (Next FY)"
+      hint: "Consensus EPS estimate for next fiscal year."
+      format: currency
+    analyst_revenue_estimate_current_fy:
+      label: "Rev Est (This FY)"
+      hint: "Consensus revenue estimate for the current fiscal year."
+      format: currency_large
+    analyst_revenue_estimate_next_fy:
+      label: "Rev Est (Next FY)"
+      hint: "Consensus revenue estimate for next fiscal year."
+      format: currency_large
+    analyst_price_target_mean:
+      label: "Price Target (Mean)"
+      hint: "Average analyst price target."
+      format: currency
+    analyst_price_target_high:
+      label: "Price Target (High)"
+      hint: "Highest analyst price target."
+      format: currency
+    analyst_price_target_low:
+      label: "Price Target (Low)"
+      hint: "Lowest analyst price target."
+      format: currency
+    analyst_coverage_count:
+      label: "Analyst Coverage"
+      hint: "Number of analysts actively covering this ticker."
+      format: integer

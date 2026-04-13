@@ -1,0 +1,21 @@
+:concurrency: 5
+:timeout: 30
+
+# Queues
+:queues:
+  - [critical, 10]
+  - [default, 5]
+  - [notifications, 3]
+  - [low, 1]
+
+# Production settings
+production:
+  :concurrency: 5
+
+# Development settings
+development:
+  :concurrency: 5
+
+# Test settings
+test:
+  :concurrency: 1

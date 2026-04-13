@@ -1,0 +1,51 @@
+<% content_for :title, "Broker Orders" %>
+
+<div class="admin-header">
+  <div class="breadcrumb">
+    <%= link_to "ADMIN", admin_root_path %>
+    <span class="breadcrumb-separator">/</span>
+    <span>BROKER</span>
+    <span class="breadcrumb-separator">/</span>
+    <span>ORDERS</span>
+  </div>
+  <h1>Broker Orders</h1>
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Trade ID</th>
+        <th>Broker Order ID</th>
+        <th>Status</th>
+        <th>Order Type</th>
+        <th>Ticker</th>
+        <th>Side</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @orders.each do |order| %>
+        <tr>
+          <td class="mono"><%= order.id %></td>
+          <td class="mono"><%= link_to order.trade_id, admin_trade_path(order.trade_id) if order.trade_id %></td>
+          <td class="mono text-secondary"><%= order.broker_order_id %></td>
+          <td>
+            <span class="badge badge-info"><%= order.status %></span>
+          </td>
+          <td class="mono"><%= order.order_type %></td>
+          <td class="mono"><%= order.ticker %></td>
+          <td>
+            <span class="badge <%= order.side == 'buy' ? 'badge-success' : 'badge-danger' %>">
+              <%= order.side&.upcase || '-' %>
+            </span>
+          </td>
+          <td class="mono text-secondary"><%= order.created_at.strftime("%Y-%m-%d %H:%M:%S") %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<%= paginate @orders if defined?(paginate) %>

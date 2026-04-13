@@ -1,0 +1,49 @@
+{
+  "metrics": [
+    {
+      "ticker": "AAPL",
+      "metric": "social_mentions_1h",
+      "value": 128,
+      "source": "social_scan",
+      "observed_at": "2026-02-07T18:00:00Z",
+      "is_derived": false,
+      "meta": {
+        "window_minutes": 60
+      }
+    },
+    {
+      "ticker": "AAPL",
+      "metric": "sentiment_score",
+      "value": 0.42,
+      "source": "social_scan",
+      "observed_at": "2026-02-07T18:00:00Z",
+      "is_derived": true,
+      "meta": {
+        "model": "v1"
+      }
+    },
+    {
+      "ticker": "AAPL",
+      "metric": "fs_income_revenue",
+      "value": 119575000000,
+      "source": "financial_datasets",
+      "period_type": "quarterly",
+      "period_start": "2025-10-01",
+      "period_end": "2025-12-31",
+      "fiscal_year": 2025,
+      "fiscal_quarter": 4,
+      "observed_at": "2026-02-01T00:00:00Z",
+      "is_derived": false
+    },
+    {
+      "ticker": "AAPL",
+      "metric": "profit_roe",
+      "value": 0.44,
+      "source": "financial_datasets",
+      "period_type": "ttm",
+      "period_end": "2025-12-31",
+      "observed_at": "2026-02-01T00:00:00Z",
+      "is_derived": true
+    }
+  ]
+}

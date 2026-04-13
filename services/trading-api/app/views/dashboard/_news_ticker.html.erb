@@ -1,0 +1,10 @@
+<%= turbo_frame_tag "news-ticker" do %>
+  <% if items.any? %>
+    <div class="flip-ticker" aria-label="News ticker"
+         data-controller="news-ticker"
+         data-news-ticker-items-value="<%= items.to_json %>">
+    </div>
+  <% else %>
+    <div class="flip-ticker" aria-label="News ticker"></div>
+  <% end %>
+<% end %>

@@ -1,0 +1,144 @@
+<% if positions.blank? %>
+  <div class="empty-state">No positions</div>
+<% else %>
+  <%
+    sorted = positions.sort_by { |p| [p[:agent_name].to_s, p[:ticker].to_s] }
+    metric_groups = DashboardController::DASHBOARD_METRIC_GROUPS
+  %>
+  <div class="table-wrapper">
+    <table id="positions-table">
+      <thead>
+        <tr>
+          <th class="hide-small">Agent</th>
+          <th>Ticker</th>
+          <th>Qty</th>
+          <th class="hide-mobile">Entry</th>
+          <th>Value</th>
+          <th>P&L</th>
+          <th class="hide-small">P&L %</th>
+        </tr>
+      </thead>
+      <tbody data-controller="position-expand">
+        <% sorted.each_with_index do |pos, idx| %>
+          <%
+            pnl_class = pos[:unrealized_pnl].to_f >= 0 ? 'positive' : 'negative'
+            thesis = pos[:thesis_full] || pos[:thesis] || 'No thesis recorded'
+            stop_loss = pos[:stop_loss] ? number_to_currency(pos[:stop_loss]) : '—'
+            target = pos[:target_price] ? number_to_currency(pos[:target_price]) : '—'
+            side = pos[:side] || 'LONG'
+            metrics_data = pos[:metrics]
+            has_metrics = metrics_data.present? && metrics_data[:metrics].present?
+          %>
+          <tr class="position-row"
+              data-position-expand-target="row"
+              data-index="<%= idx %>"
+              data-ticker="<%= pos[:ticker] %>"
+              data-agent-name="<%= pos[:agent_name].to_s.downcase %>"
+              data-action="click->position-expand#toggle"
+              style="cursor: pointer;">
+            <td class="hide-small"><%= pos[:agent_name] %></td>
+            <td>
+              <strong style="font-family: 'Libre Baskerville', serif; font-size: 18px;"><%= pos[:ticker] %></strong>
+              <span style="color: var(--accent-gold); font-size: 10px;">▼</span>
+            </td>
+            <td><%= number_with_precision(pos[:qty], precision: 2) %></td>
+            <td class="hide-mobile"><%= number_to_currency(pos[:avg_entry_price]) %></td>
+            <td><%= number_to_currency(pos[:current_value]) %></td>
+            <td class="<%= pnl_class %>"><%= number_to_currency(pos[:unrealized_pnl]) %></td>
+            <td class="<%= pnl_class %> hide-small">
+              <%= pos[:pnl_percent].to_f >= 0 ? '+' : '' %><%= number_with_precision(pos[:pnl_percent], precision: 2) %>%
+            </td>
+          </tr>
+          <tr class="position-details"
+              data-position-expand-target="details"
+              data-index="<%= idx %>"
+              data-ticker="<%= pos[:ticker] %>"
+              data-agent-name="<%= pos[:agent_name].to_s.downcase %>"
+              style="display: none;">
+            <td colspan="7" style="padding: 0;">
+              <div class="thesis-card">
+                <div class="thesis-card-header">
+                  <span style="font-family: 'Libre Baskerville', serif; font-size: 20px; font-weight: 600;"><%= pos[:ticker] %></span>
+                  <span style="color: var(--text-muted); margin-left: auto;"><%= pos[:agent_name] %></span>
+                </div>
+                <div class="thesis-card-body">
+                  <div class="thesis-text"><%= thesis %></div>
+                </div>
+                <% if has_metrics %>
+                  <% m = metrics_data[:metrics] %>
+                  <div class="metrics-panel">
+                    <div class="metrics-panel-header">
+                      <span class="metrics-panel-title">Fundamentals</span>
+                      <span class="metrics-panel-period">Q<%= metrics_data[:fiscal_quarter] %> FY<%= metrics_data[:fiscal_year] %></span>
+                    </div>
+                    <div class="metrics-grid">
+                      <% metric_groups.each do |group| %>
+                        <% group_metrics = group[:metrics].select { |key| m[key].present? } %>
+                        <% next if group_metrics.empty? %>
+                        <div class="metrics-group">
+                          <div class="metrics-group-label"><%= group[:label] %></div>
+                          <% group_metrics.each do |key| %>
+                            <%
+                              val = m[key]
+                              label = AppConfig.ticker_metrics_label(key)
+                              hint = AppConfig.ticker_metrics_hint(key)
+                              fmt = AppConfig.ticker_metrics_format(key)
+
+                              # Format the value based on config format type
+                              display = case fmt
+                              when "percent"
+                                sign = val >= 0 ? "+" : ""
+                                "#{sign}#{number_to_percentage(val * 100, precision: 0)}"
+                              when "currency_large"
+                                if val.abs >= 1_000_000_000
+                                  "$#{number_with_precision(val / 1_000_000_000.0, precision: 1)}B"
+                                elsif val.abs >= 1_000_000
+                                  "$#{number_with_precision(val / 1_000_000.0, precision: 0)}M"
+                                else
+                                  number_to_currency(val, precision: 0)
+                                end
+                              when "currency"
+                                "$#{number_with_precision(val, precision: 2)}"
+                              when "ratio"
+                                number_with_precision(val, precision: val.abs < 10 ? 2 : 1)
+                              when "integer"
+                                number_with_delimiter(val.round)
+                              else
+                                number_with_precision(val, precision: 2)
+                              end
+
+                              # Color growth/percent values
+                              value_class = if fmt == "percent"
+                                val >= 0 ? "positive" : "negative"
+                              else
+                                ""
+                              end
+                            %>
+                            <div class="metric-item" title="<%= hint %>">
+                              <span class="metric-name"><%= label %></span>
+                              <span class="metric-value <%= value_class %>"><%= display %></span>
+                            </div>
+                          <% end %>
+                        </div>
+                      <% end %>
+                    </div>
+                  </div>
+                <% end %>
+                <div class="thesis-card-footer">
+                  <div class="thesis-stat"><span class="label">Stop</span><span class="value"><%= stop_loss %></span></div>
+                  <div class="thesis-stat"><span class="label">Target</span><span class="value"><%= target %></span></div>
+                  <div class="thesis-stat"><span class="label">Side</span><span class="value"><%= side %></span></div>
+                  <div class="thesis-stat"><span class="label">Opened</span><span class="value"><%= pos[:opened_at] || '—' %></span></div>
+                  <div class="thesis-links">
+                    <%= link_to "#{pos[:agent_name]}'s Notes", notes_path(pos[:agent_name].to_s.downcase, pos[:ticker]), class: "thesis-link", onclick: "event.stopPropagation();" %>
+                    <%= link_to "Research", research_path(pos[:ticker]), class: "thesis-link", onclick: "event.stopPropagation();" %>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>

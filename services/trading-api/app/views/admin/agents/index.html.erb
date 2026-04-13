@@ -1,0 +1,51 @@
+<% content_for :title, "Agents" %>
+
+<div class="admin-header">
+  <div class="breadcrumb">
+    <%= link_to "ADMIN", admin_root_path %>
+    <span class="breadcrumb-separator">/</span>
+    <span>AGENTS</span>
+  </div>
+  <h1>Trading Agents</h1>
+</div>
+
+<div class="stats-grid">
+  <% @agents.each do |agent| %>
+    <div class="stat-card">
+      <div class="stat-label"><%= agent.name %></div>
+      <div class="stat-value mono"><%= agent.agent_id %></div>
+      <div class="stat-sublabel">
+        <%= link_to "View details →", admin_agent_path(agent) %>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Agent ID</th>
+        <th>Created</th>
+        <th>Updated</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @agents.each do |agent| %>
+        <tr>
+          <td class="mono"><%= agent.id %></td>
+          <td><strong><%= agent.name %></strong></td>
+          <td class="mono text-secondary"><%= agent.agent_id %></td>
+          <td class="mono text-secondary"><%= agent.created_at.strftime("%Y-%m-%d") %></td>
+          <td class="mono text-secondary"><%= agent.updated_at.strftime("%Y-%m-%d") %></td>
+          <td>
+            <%= link_to "View →", admin_agent_path(agent) %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

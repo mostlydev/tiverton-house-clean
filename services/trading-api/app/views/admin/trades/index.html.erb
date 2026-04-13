@@ -1,0 +1,94 @@
+<% content_for :title, "Trades" %>
+
+<div class="admin-header">
+  <div class="breadcrumb">
+    <%= link_to "ADMIN", admin_root_path %>
+    <span class="breadcrumb-separator">/</span>
+    <span>TRADES</span>
+  </div>
+  <h1>All Trades</h1>
+</div>
+
+<div class="filters">
+  <%= form_with url: admin_trades_path, method: :get, local: true do |f| %>
+    <div class="filter-group">
+      <label class="filter-label">Status</label>
+      <%= f.select :status,
+          options_for_select([
+            ['All Statuses', ''],
+            ['PROPOSED', 'PROPOSED'],
+            ['APPROVED', 'APPROVED'],
+            ['QUEUED', 'QUEUED'],
+            ['EXECUTING', 'EXECUTING'],
+            ['FILLED', 'FILLED'],
+            ['DENIED', 'DENIED'],
+            ['FAILED', 'FAILED']
+          ], params[:status]),
+          {},
+          { onchange: 'this.form.requestSubmit()' }
+      %>
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label">Agent</label>
+      <%= f.select :agent_id,
+          options_for_select([['All Agents', '']] + Agent.pluck(:name, :agent_id), params[:agent_id]),
+          {},
+          { onchange: 'this.form.requestSubmit()' }
+      %>
+    </div>
+  <% end %>
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Agent</th>
+        <th>Ticker</th>
+        <th>Side</th>
+        <th>Quantity</th>
+        <th>Price</th>
+        <th>Total Value</th>
+        <th>Status</th>
+        <th>Created</th>
+        <th>Updated</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @trades.each do |trade| %>
+        <tr>
+          <td class="mono"><%= trade.id %></td>
+          <td><%= trade.agent&.name || trade.agent_id %></td>
+          <td class="mono"><strong><%= trade.ticker %></strong></td>
+          <td>
+            <span class="badge <%= trade.side == 'BUY' ? 'badge-success' : 'badge-danger' %>">
+              <%= trade.side %>
+            </span>
+          </td>
+          <td class="mono"><%= trade.qty_requested ? number_with_delimiter(trade.qty_requested) : (trade.amount_requested ? "$#{number_with_delimiter(trade.amount_requested.round(2))}" : '-') %></td>
+          <td class="mono"><%= trade.avg_fill_price ? "$#{number_with_precision(trade.avg_fill_price, precision: 2)}" : (trade.limit_price ? "$#{number_with_precision(trade.limit_price, precision: 2)}" : 'MARKET') %></td>
+          <td class="mono"><%= trade.filled_value ? "$#{number_with_delimiter(trade.filled_value.round(2))}" : '-' %></td>
+          <td>
+            <span class="badge <%= status_badge_class(trade.status) %>">
+              <%= trade.status %>
+            </span>
+          </td>
+          <td class="mono text-secondary">
+            <%= trade.created_at.strftime("%m/%d %H:%M") %>
+          </td>
+          <td class="mono text-secondary">
+            <%= trade.updated_at.strftime("%m/%d %H:%M") %>
+          </td>
+          <td>
+            <%= link_to "View →", admin_trade_path(trade) %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<%= paginate @trades if defined?(paginate) %>

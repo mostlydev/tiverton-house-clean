@@ -1,0 +1,29 @@
+<%
+  agent_meta = {
+    'Weston' => { strategy: 'Momentum' },
+    'Logan' => { strategy: 'Value' },
+    'Dundas' => { strategy: 'Events' }
+  }
+
+  traders = agents.select { |a| a[:role]&.downcase == 'trader' }
+%>
+
+<div id="agents-grid" class="agent-grid" data-controller="agent-filter">
+  <% traders.each do |agent| %>
+    <%
+      meta = agent_meta[agent[:name]] || { strategy: '' }
+      avatar = "#{agent[:name].downcase}.png"
+    %>
+    <div class="agent-card"
+         data-agent="<%= agent[:name].to_s.downcase %>"
+         data-agent-filter-target="card"
+         data-action="click->agent-filter#toggle">
+      <div class="agent-card-main">
+        <%= image_tag avatar, class: "agent-avatar", onerror: "this.style.display='none'" %>
+        <div class="agent-name"><%= agent[:name] %></div>
+        <div class="agent-strategy"><%= meta[:strategy] %></div>
+      </div>
+      <%= link_to "profile →", trader_path(agent[:name].downcase), class: "agent-link-tab", onclick: "event.stopPropagation();" %>
+    </div>
+  <% end %>
+</div>

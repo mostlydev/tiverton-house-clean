@@ -1,0 +1,522 @@
+<% content_for :title, "#{@trader[:name]} · The Tiverton House" %>
+<% content_for :description, "#{@trader[:name]} - #{@trader[:role]}. #{@trader[:bio][0..150]}..." %>
+
+<style>
+  .trader-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem;
+  }
+
+  /* Compact Header */
+  .trader-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.5rem 0;
+    border-bottom: 1px solid var(--border-gold);
+    margin-bottom: 1.5rem;
+  }
+
+  .trader-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    border: 3px solid var(--accent-gold);
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  .trader-identity {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .trader-name {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--accent-gold);
+    letter-spacing: 1px;
+    margin: 0;
+    line-height: 1.2;
+  }
+
+  .trader-role {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-top: 0.25rem;
+  }
+
+  .header-stats {
+    display: flex;
+    gap: 2rem;
+    flex-shrink: 0;
+  }
+
+  .header-stat {
+    text-align: right;
+  }
+
+  .header-stat-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text-muted);
+  }
+
+  .header-stat-value {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--accent-cream);
+  }
+
+  .header-stat-value.positive { color: var(--accent-green); }
+  .header-stat-value.negative { color: var(--accent-red); }
+
+  .back-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: color 0.2s;
+  }
+  .back-link:hover { color: var(--accent-gold); }
+
+  /* Stacked Layout */
+  .content-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  /* Portfolio Panel */
+  .portfolio-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    overflow: visible;
+  }
+
+  .panel-header {
+    padding: 0.9rem 1rem;
+    background: linear-gradient(90deg, rgba(198, 173, 99, 0.08) 0%, transparent 100%);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .panel-title {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--accent-cream);
+    letter-spacing: 0.5px;
+  }
+
+  .panel-badge {
+    font-size: 11px;
+    color: var(--text-muted);
+    background: var(--bg-secondary);
+    padding: 0.2rem 0.5rem;
+    border-radius: 10px;
+  }
+
+  /* Compact Position Grid */
+  .position-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1px;
+    background: var(--border-color);
+  }
+
+  .position-card {
+    background: var(--bg-card);
+    padding: 0.9rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .position-card:hover { background: rgba(198, 173, 99, 0.05); }
+
+  .position-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .position-ticker {
+    font-family: 'Libre Baskerville', serif;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--accent-gold);
+    min-width: 48px;
+  }
+
+  .position-info {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.3;
+  }
+
+  .position-right {
+    text-align: right;
+  }
+
+  .position-value {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+  }
+
+  .position-pnl {
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+  .position-pnl.positive { color: var(--accent-green); }
+  .position-pnl.negative { color: var(--accent-red); }
+
+  .empty-positions {
+    padding: 2rem 1rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  /* Summary Row */
+  .portfolio-summary {
+    padding: 0.75rem 1rem;
+    background: var(--bg-secondary);
+    border-radius: 0 0 10px 10px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 2rem;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+  }
+
+  .summary-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .summary-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+  }
+
+  .summary-value {
+    font-family: 'Libre Baskerville', serif;
+    font-weight: 600;
+    color: var(--accent-cream);
+  }
+
+  /* Ledger Panel */
+  .ledger-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .ledger-table-wrapper {
+    overflow-x: auto;
+    max-height: 600px;
+    overflow-y: auto;
+  }
+
+  .ledger-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  .ledger-table th {
+    text-align: left;
+    padding: 0.7rem 0.8rem;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text-muted);
+    font-weight: 500;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  .ledger-table td {
+    padding: 0.6rem 0.8rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+    vertical-align: middle;
+  }
+
+  .ledger-table tr:last-child td { border-bottom: none; }
+  .ledger-table tbody tr:hover { background: rgba(198, 173, 99, 0.03); }
+
+  .trade-date {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  .trade-ticker {
+    font-family: 'Libre Baskerville', serif;
+    font-weight: 600;
+    color: var(--accent-gold);
+  }
+
+  .side-pill {
+    display: inline-block;
+    padding: 0.15rem 0.45rem;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+
+  .side-pill.buy {
+    background: rgba(93, 138, 74, 0.2);
+    color: var(--accent-green);
+  }
+
+  .side-pill.sell {
+    background: rgba(166, 61, 64, 0.2);
+    color: var(--accent-red);
+  }
+
+  .trade-qty {
+    text-align: right;
+    font-family: 'Libre Baskerville', serif;
+    font-size: 0.85rem;
+  }
+
+  .trade-price {
+    text-align: right;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+  }
+
+  .trade-value {
+    text-align: right;
+    font-family: 'Libre Baskerville', serif;
+    font-weight: 500;
+  }
+
+  .trade-value.inflow { color: var(--accent-green); }
+  .trade-value.outflow { color: var(--text-secondary); }
+
+  .trade-balance {
+    text-align: right;
+    font-family: 'Libre Baskerville', serif;
+    font-size: 0.9rem;
+    color: var(--accent-cream);
+  }
+
+  .empty-ledger {
+    padding: 3rem 1rem;
+    text-align: center;
+    color: var(--text-muted);
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .header-stats {
+      width: 100%;
+      justify-content: flex-start;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .header-stat {
+      text-align: left;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .trader-header {
+      flex-wrap: wrap;
+    }
+
+    .trader-avatar {
+      width: 56px;
+      height: 56px;
+    }
+
+    .trader-name {
+      font-size: 1.4rem;
+    }
+
+    .header-stats {
+      gap: 1rem;
+    }
+
+    .header-stat-value {
+      font-size: 1.1rem;
+    }
+  }
+</style>
+
+<div class="trader-page">
+  <div class="trader-header">
+    <%= link_to "← Dashboard", root_path, class: "back-link" %>
+  </div>
+
+  <div class="trader-header" style="border-top: none; padding-top: 0;">
+    <%= image_tag @trader[:image], alt: @trader[:name], class: "trader-avatar", onerror: "this.style.display='none'" %>
+    <div class="trader-identity">
+      <h1 class="trader-name"><%= @trader[:name] %></h1>
+      <div class="trader-role"><%= @trader[:role] %></div>
+    </div>
+    <div class="header-stats">
+      <div class="header-stat">
+        <div class="header-stat-label">Total Value</div>
+        <div class="header-stat-value"><%= number_to_currency(@summary[:current_total]) %></div>
+      </div>
+      <div class="header-stat">
+        <div class="header-stat-label">vs <%= number_to_currency(@summary[:starting_balance], precision: 0) %> Start</div>
+        <div class="header-stat-value <%= @summary[:vs_starting] >= 0 ? 'positive' : 'negative' %>">
+          <%= @summary[:vs_starting] >= 0 ? '+' : '' %><%= number_to_currency(@summary[:vs_starting]) %>
+        </div>
+      </div>
+      <div class="header-stat">
+        <div class="header-stat-label">Realized P&L</div>
+        <div class="header-stat-value <%= @realized_pnl >= 0 ? 'positive' : 'negative' %>">
+          <%= @realized_pnl >= 0 ? '+' : '' %><%= number_to_currency(@realized_pnl) %>
+        </div>
+      </div>
+      <div class="header-stat">
+        <div class="header-stat-label">Total P&L</div>
+        <div class="header-stat-value <%= @total_pnl >= 0 ? 'positive' : 'negative' %>">
+          <%= @total_pnl >= 0 ? '+' : '' %><%= number_to_currency(@total_pnl) %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-stack">
+    <!-- Portfolio -->
+    <div class="portfolio-panel">
+      <div class="panel-header">
+        <span class="panel-title">Portfolio</span>
+        <span class="panel-badge"><%= @positions.length %> positions</span>
+      </div>
+
+      <% if @positions.any? %>
+        <div class="position-grid">
+          <% @positions.each do |pos| %>
+            <div class="position-card">
+              <div class="position-left">
+                <span class="position-ticker"><%= pos[:ticker] %></span>
+                <div class="position-info">
+                  <%= number_with_precision(pos[:qty], precision: 2, strip_insignificant_zeros: true) %> @ <%= number_to_currency(pos[:avg_entry_price]) %>
+                </div>
+              </div>
+              <div class="position-right">
+                <div class="position-value"><%= number_to_currency(pos[:current_value]) %></div>
+                <div class="position-pnl <%= pos[:unrealized_pnl] >= 0 ? 'positive' : 'negative' %>">
+                  <%= pos[:unrealized_pnl] >= 0 ? '+' : '' %><%= number_to_currency(pos[:unrealized_pnl]) %>
+                  (<%= number_with_precision(pos[:pnl_percent], precision: 1) %>%)
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <div class="portfolio-summary">
+          <div class="summary-item">
+            <span class="summary-label">Total Value</span>
+            <span class="summary-value"><%= number_to_currency(@wallet[:invested]) %></span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Unrealized</span>
+            <% total_unrealized = @positions.sum { |p| p[:unrealized_pnl] } %>
+            <span class="summary-value" style="color: var(<%= total_unrealized >= 0 ? '--accent-green' : '--accent-red' %>)">
+              <%= total_unrealized >= 0 ? '+' : '' %><%= number_to_currency(total_unrealized) %>
+            </span>
+          </div>
+        </div>
+      <% else %>
+        <div class="empty-positions">No open positions</div>
+      <% end %>
+    </div>
+
+    <!-- Trade Ledger -->
+    <div class="ledger-panel">
+      <div class="panel-header">
+        <span class="panel-title">Trade Ledger</span>
+        <span class="panel-badge"><%= @summary[:trade_count] %> trades</span>
+      </div>
+
+      <% if @trades.any? %>
+        <div class="ledger-table-wrapper">
+          <table class="ledger-table">
+            <thead>
+              <tr>
+                <th style="width: 90px;">Date</th>
+                <th style="width: 70px;">Ticker</th>
+                <th style="width: 50px;">Side</th>
+                <th style="text-align: right; width: 70px;">Qty</th>
+                <th style="text-align: right; width: 80px;">Price</th>
+                <th style="text-align: right; width: 90px;">Value</th>
+                <th style="text-align: right; width: 90px;">Cash</th>
+              </tr>
+            </thead>
+            <tbody>
+              <%
+                # Calculate running cash balance from the recorded starting balance
+                starting_cash = @starting_balance
+                running_balance = starting_cash
+                balances = []
+                @trades.each do |trade|
+                  if trade[:side] == 'SELL'
+                    running_balance += trade[:filled_value]
+                  else
+                    running_balance -= trade[:filled_value]
+                  end
+                  balances << running_balance
+                end
+                balances_reversed = balances.reverse
+              %>
+              <% @trades.reverse.each_with_index do |trade, idx| %>
+                <tr>
+                  <td class="trade-date">
+                    <% if trade[:executed_at] %>
+                      <%= trade[:executed_at].strftime("%b %d") %>
+                    <% else %>
+                      —
+                    <% end %>
+                  </td>
+                  <td class="trade-ticker"><%= trade[:ticker] %></td>
+                  <td>
+                    <span class="side-pill <%= trade[:side].downcase %>"><%= trade[:side] %></span>
+                  </td>
+                  <td class="trade-qty"><%= number_with_precision(trade[:qty_filled], precision: 2, strip_insignificant_zeros: true) %></td>
+                  <td class="trade-price"><%= number_to_currency(trade[:avg_fill_price]) %></td>
+                  <td class="trade-value <%= trade[:side] == 'SELL' ? 'inflow' : 'outflow' %>">
+                    <%= trade[:side] == 'SELL' ? '+' : '-' %><%= number_to_currency(trade[:filled_value]) %>
+                  </td>
+                  <td class="trade-balance"><%= number_to_currency(balances_reversed[idx], precision: 0) %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <div class="empty-ledger">
+          <p>No completed trades yet.</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

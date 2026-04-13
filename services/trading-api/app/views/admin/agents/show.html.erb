@@ -1,0 +1,141 @@
+<% content_for :title, @agent.name %>
+
+<div class="admin-header">
+  <div class="breadcrumb">
+    <%= link_to "ADMIN", admin_root_path %>
+    <span class="breadcrumb-separator">/</span>
+    <%= link_to "AGENTS", admin_agents_path %>
+    <span class="breadcrumb-separator">/</span>
+    <span><%= @agent.name %></span>
+  </div>
+  <h1><%= @agent.name %></h1>
+</div>
+
+<div class="detail-grid">
+  <div class="detail-section">
+    <h3>Agent Details</h3>
+    <div class="detail-row">
+      <span class="detail-label">ID</span>
+      <span class="detail-value"><%= @agent.id %></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Name</span>
+      <span class="detail-value"><%= @agent.name %></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Agent ID</span>
+      <span class="detail-value"><%= @agent.agent_id %></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Created</span>
+      <span class="detail-value"><%= @agent.created_at.strftime("%Y-%m-%d %H:%M") %></span>
+    </div>
+  </div>
+
+  <% if @wallet %>
+    <div class="detail-section">
+      <h3>Wallet</h3>
+      <div class="detail-row">
+        <span class="detail-label">Wallet Size</span>
+        <span class="detail-value">$<%= number_with_delimiter(@wallet.wallet_size.round(2)) %></span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Cash</span>
+        <span class="detail-value">$<%= number_with_delimiter(@wallet.cash.round(2)) %></span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Invested</span>
+        <span class="detail-value">$<%= number_with_delimiter(@wallet.invested.round(2)) %></span>
+      </div>
+      <div class="stat-sublabel" style="text-align: right; margin-top: 0.5rem;">
+        <%= link_to "View wallet →", admin_wallet_path(@wallet) %>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<h2>Positions (<%= @positions.count %>)</h2>
+<% if @positions.any? %>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Ticker</th>
+          <th>Quantity</th>
+          <th>Avg Cost</th>
+          <th>Current Price</th>
+          <th>Market Value</th>
+          <th>P&L</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @positions.each do |position| %>
+          <tr>
+            <td class="mono"><strong><%= position.ticker %></strong></td>
+            <td class="mono"><%= number_with_delimiter(position.qty) %></td>
+            <td class="mono">$<%= number_with_precision(position.avg_entry_price, precision: 2) %></td>
+            <td class="mono">$<%= number_with_precision((position.current_value / position.qty), precision: 2) if position.qty > 0 %></td>
+            <td class="mono">$<%= number_with_delimiter(position.current_value.round(2)) %></td>
+            <% pnl = position.current_value - (position.avg_entry_price * position.qty) %>
+            <td class="mono" style="color: <%= pnl >= 0 ? 'var(--accent-green)' : 'var(--accent-red)' %>">
+              <%= pnl >= 0 ? '+' : '' %>$<%= number_with_delimiter(pnl.round(2)) %>
+            </td>
+            <td>
+              <%= link_to "View →", admin_position_path(position) %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <p class="text-secondary">No open positions</p>
+<% end %>
+
+<h2>Recent Trades (<%= @trades.count %>)</h2>
+<% if @trades.any? %>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Ticker</th>
+          <th>Side</th>
+          <th>Quantity</th>
+          <th>Price</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @trades.each do |trade| %>
+          <tr>
+            <td class="mono"><%= trade.id %></td>
+            <td class="mono"><strong><%= trade.ticker %></strong></td>
+            <td>
+              <span class="badge <%= trade.side == 'BUY' ? 'badge-success' : 'badge-danger' %>">
+                <%= trade.side %>
+              </span>
+            </td>
+            <td class="mono"><%= trade.qty_filled || trade.qty_requested ? number_with_delimiter(trade.qty_filled || trade.qty_requested) : '-' %></td>
+            <td class="mono"><%= trade.avg_fill_price ? "$#{number_with_precision(trade.avg_fill_price, precision: 2)}" : (trade.limit_price ? "$#{number_with_precision(trade.limit_price, precision: 2)}" : 'MARKET') %></td>
+            <td>
+              <span class="badge <%= status_badge_class(trade.status) %>">
+                <%= trade.status %>
+              </span>
+            </td>
+            <td class="mono text-secondary"><%= trade.created_at.strftime("%m/%d %H:%M") %></td>
+            <td>
+              <%= link_to "View →", admin_trade_path(trade) %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <p class="text-secondary">No trades</p>
+<% end %>
+
